@@ -1,0 +1,130 @@
+---
+title: "Getting Started: Survival Pipeline"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started: Survival Pipeline}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4
+)
+```
+
+```{r setup}
+library(omicsuite)
+```
+
+## Why a pipeline instead of just `coxph()`
+
+Fitting a Cox model is one line of code. Trusting it takes several more:
+checking the proportional hazards assumption, checking whether a handful of
+observations are driving the estimate, and checking whether continuous
+covariates actually enter the model linearly on the log-hazard scale.
+`fit_coxph_pipeline()` runs all of that in one call and returns a structured
+verdict alongside the model.
+
+## A simulated example
+
+```{r}
+set.seed(1)
+n <- 300
+dat <- data.frame(
+  time  = rexp(n, rate = 0.05),
+  event = rbinom(n, 1, 0.7),
+  arm   = factor(sample(c("control", "treatment"), n, replace = TRUE)),
+  age   = rnorm(n, 55, 10)
+)
+
+fit <- fit_coxph_pipeline(
+  data       = dat,
+  time_var   = "time",
+  event_var  = "event",
+  covariates = "arm",
+  adjust_for = "age"
+)
+
+fit
+```
+
+## Reading the verdict table
+
+```{r}
+fit$verdicts
+```
+
+Each row is one diagnostic check. `"pass"` means no evidence of a problem;
+`"flagged"` means the check crossed the threshold and is worth a sentence in
+your write-up; `"review"` (functional form only) means the check produces a
+plot for visual inspection rather than an automatic pass/fail, since
+linearity-on-the-log-hazard-scale is a judgment call, not a threshold test.
+
+## Diagnostic plots
+
+```{r, fig.alt = "Proportional hazards test plot"}
+plot(fit, which = "ph_plot")
+```
+
+```{r, fig.alt = "Influence diagnostics plot"}
+plot(fit, which = "influence_plot")
+```
+
+```{r, fig.alt = "Functional form check for age"}
+plot(fit, which = "functional_form_age")
+```
+
+## A real worked example: the NCCTG lung cancer trial
+
+Simulated data proves the code runs; it doesn't prove the diagnostics catch
+anything real. `survival::lung` -- built into the `survival` package, no
+download required -- is a better test case: `ph.ecog` has a few missing
+values that `coxph()` will otherwise drop silently, and `sex` is a
+borderline case for the proportional hazards assumption in this dataset.
+
+```{r}
+library(survival)
+
+lung2 <- lung
+lung2$status <- lung2$status - 1  # recode 1/2 -> 0/1 event coding
+lung2$sex <- factor(lung2$sex, labels = c("male", "female"))
+
+# ph.ecog has a handful of NAs; drop them explicitly rather than letting
+# coxph() do it silently, so the row count in the model is exactly what
+# you'd report in a methods section.
+lung2 <- lung2[stats::complete.cases(lung2[, c("time", "status", "sex", "age", "ph.ecog")]), ]
+
+fit_lung <- fit_coxph_pipeline(
+  data       = lung2,
+  time_var   = "time",
+  event_var  = "status",
+  covariates = "sex",
+  adjust_for = c("age", "ph.ecog")
+)
+
+fit_lung
+```
+
+```{r}
+fit_lung$verdicts
+```
+
+```{r, fig.alt = "Proportional hazards test plot, lung data"}
+plot(fit_lung, which = "ph_plot")
+```
+
+```{r, fig.alt = "Functional form check for ph.ecog, lung data"}
+plot(fit_lung, which = "functional_form_ph.ecog")
+```
+
+Two things worth checking by eye rather than taking on faith: confirm
+`fit_lung$model_adjusted$n` matches the row count of `lung2` after the
+`complete.cases()` filter (so you know exactly which observations the
+hazard ratios describe), and look at whether `sex` clears the proportional
+hazards test here -- it's close enough in this dataset that it's worth a
+sentence in a write-up either way, rather than a silent pass.
+
