@@ -36,8 +36,12 @@
 #'   \item{primary_model}{Whichever of the two above is the model of record
 #'     (adjusted if available, else unadjusted) -- used for diagnostics.}
 #'   \item{ph_test}{The [survival::cox.zph()] result for `primary_model`.}
-#'   \item{influence}{A list with the dfbeta/dfbetas matrices and the row
-#'     indices flagged as influential.}
+#'   \item{influence}{A list with the dfbeta/dfbetas matrices (indexed to
+#'     `used_rows`, in fitted-model order), `flagged_rows` (indices into the
+#'     original `data` you passed in -- so `data[fit$influence$flagged_rows, ]`
+#'     always works, even if `coxph()` silently dropped rows with missing
+#'     values), `used_rows` (which original rows the model was actually
+#'     fitted on), and `n_used`.}
 #'   \item{functional_form}{A named list of data.frames (martingale residual
 #'     vs. covariate value) for each continuous covariate in `covariates`.}
 #'   \item{plots}{A named list of `ggplot` objects: `ph_plot`, `influence_plot`,
@@ -112,6 +116,15 @@ fit_coxph_pipeline <- function(data,
 
   primary_model <- if (!is.null(model_adjusted)) model_adjusted else model_unadjusted
 
+  # coxph() silently drops rows with NA in any model variable (na.action =
+  # na.omit by default). Every diagnostic below operates on residuals/fitted
+  # values that are only as long as the *fitted* model, not the original
+  # `data` -- so we track which original rows survived and index from that,
+  # rather than assuming a 1:1 match with `data`.
+  omitted <- primary_model$na.action
+  used_rows <- if (!is.null(omitted)) seq_len(n)[-as.integer(omitted)] else seq_len(n)
+  n_used <- length(used_rows)
+
   # --- proportional hazards test ---------------------------------------------
   ph_test <- survival::cox.zph(primary_model)
   ph_table <- as.data.frame(ph_test$table)
@@ -155,9 +168,12 @@ fit_coxph_pipeline <- function(data,
     dfbeta_mat <- matrix(dfbeta_mat, ncol = 1, dimnames = list(NULL, names(stats::coef(primary_model))[1]))
     dfbetas_mat <- matrix(dfbetas_mat, ncol = 1, dimnames = list(NULL, names(stats::coef(primary_model))[1]))
   }
-  cutoff <- influence_cutoff_sd * 2 / sqrt(n)
-  flagged_rows <- unique(which(abs(dfbetas_mat) > cutoff, arr.ind = TRUE)[, 1])
-  prop_flagged <- length(flagged_rows) / n
+  cutoff <- influence_cutoff_sd * 2 / sqrt(n_used)
+  flagged_rows_fitted <- unique(which(abs(dfbetas_mat) > cutoff, arr.ind = TRUE)[, 1])
+  # Map back to row positions in the original `data` the caller passed in,
+  # so `data[fit$influence$flagged_rows, ]` works even when rows were dropped.
+  flagged_rows <- used_rows[flagged_rows_fitted]
+  prop_flagged <- length(flagged_rows) / n_used
 
   influence_verdict <- make_verdict(
     check = "influence[dfbetas]",
@@ -165,8 +181,9 @@ fit_coxph_pipeline <- function(data,
     statistic = prop_flagged,
     p_value = NA_real_,
     note = sprintf(
-      "%d of %d observations (%.1f%%) exceed the |dfbetas| > %.3f cutoff. %s",
-      length(flagged_rows), n, 100 * prop_flagged, cutoff,
+      "%d of %d observations used in the fit (%.1f%%) exceed the |dfbetas| > %.3f cutoff.%s %s",
+      length(flagged_rows), n_used, 100 * prop_flagged, cutoff,
+      if (n_used < n) sprintf(" (%d row(s) were dropped due to missing values.)", n - n_used) else "",
       if (prop_flagged < 0.05) {
         "No single observation appears to be driving the fit."
       } else {
@@ -188,7 +205,7 @@ fit_coxph_pipeline <- function(data,
     martingale_resid <- stats::residuals(primary_model, type = "martingale")
     for (v in numeric_covs) {
       df_v <- data.frame(
-        covariate_value = data[[v]],
+        covariate_value = data[[v]][used_rows],
         martingale_residual = martingale_resid
       )
       functional_form[[v]] <- df_v
@@ -198,6 +215,7 @@ fit_coxph_pipeline <- function(data,
           check = sprintf("functional_form[%s]", v),
           passed = NA,
           statistic = NA_real_,
+
           p_value = NA_real_,
           note = "Martingale residuals plotted against this covariate; a loess smooth that is flat suggests the linear (log-hazard) form is adequate. Requires visual review -- not auto-scored."
         )
@@ -227,9 +245,9 @@ fit_coxph_pipeline <- function(data,
     theme_omicsuite()
 
   influence_df <- data.frame(
-    index = seq_len(n),
+    index = used_rows,
     max_abs_dfbetas = apply(abs(dfbetas_mat), 1, max),
-    flagged = seq_len(n) %in% flagged_rows
+    flagged = used_rows %in% flagged_rows
   )
   plots$influence_plot <- ggplot2::ggplot(
     influence_df,
@@ -271,7 +289,9 @@ fit_coxph_pipeline <- function(data,
         dfbeta = dfbeta_mat,
         dfbetas = dfbetas_mat,
         flagged_rows = flagged_rows,
-        cutoff = cutoff
+        cutoff = cutoff,
+        used_rows = used_rows,
+        n_used = n_used
       ),
       functional_form = functional_form,
       plots = plots,

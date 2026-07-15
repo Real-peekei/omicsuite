@@ -56,8 +56,12 @@ was not supplied.}
 \item{primary_model}{Whichever of the two above is the model of record
 (adjusted if available, else unadjusted) -- used for diagnostics.}
 \item{ph_test}{The \code{\link[survival:cox.zph]{survival::cox.zph()}} result for \code{primary_model}.}
-\item{influence}{A list with the dfbeta/dfbetas matrices and the row
-indices flagged as influential.}
+\item{influence}{A list with the dfbeta/dfbetas matrices (indexed to
+\code{used_rows}, in fitted-model order), \code{flagged_rows} (indices into the
+original \code{data} you passed in -- so \code{data[fit$influence$flagged_rows, ]}
+always works, even if \code{coxph()} silently dropped rows with missing
+values), \code{used_rows} (which original rows the model was actually
+fitted on), and \code{n_used}.}
 \item{functional_form}{A named list of data.frames (martingale residual
 vs. covariate value) for each continuous covariate in \code{covariates}.}
 \item{plots}{A named list of \code{ggplot} objects: \code{ph_plot}, \code{influence_plot},

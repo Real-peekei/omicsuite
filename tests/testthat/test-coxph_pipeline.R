@@ -68,6 +68,37 @@ test_that("influence diagnostics flag rows consistently with the reported cutoff
   expect_identical(n_flagged_from_matrix, length(fit$influence$flagged_rows))
 })
 
+test_that("fit_coxph_pipeline handles NA values in an adjust_for covariate without misaligning diagnostics", {
+  # Regression test: coxph() silently drops rows with NA in any model
+  # variable, so residual-based diagnostics (dfbeta, dfbetas, martingale
+  # residuals) come back shorter than nrow(data). Every place that pairs a
+  # residual with a covariate value must index by the rows the model
+  # actually used, not by the original data's row count.
+  set.seed(11)
+  n <- 150
+  dat <- data.frame(
+    time = stats::rexp(n, rate = 0.05),
+    event = stats::rbinom(n, 1, 0.7),
+    arm = factor(sample(c("control", "treatment"), n, replace = TRUE)),
+    age = stats::rnorm(n, 55, 10)
+  )
+  na_idx <- sample(seq_len(n), 5)
+  dat$age[na_idx] <- NA
+
+  fit <- fit_coxph_pipeline(
+    data = dat, time_var = "time", event_var = "event",
+    covariates = "arm", adjust_for = "age"
+  )
+
+  expect_identical(fit$influence$n_used, as.integer(n - length(na_idx)))
+  expect_identical(length(fit$influence$used_rows), fit$influence$n_used)
+  expect_false(any(na_idx %in% fit$influence$used_rows))
+  expect_identical(nrow(fit$functional_form$age), fit$influence$n_used)
+  expect_true(all(fit$influence$flagged_rows %in% fit$influence$used_rows))
+  # every original row index in flagged_rows must be resolvable in `dat`
+  expect_true(all(fit$influence$flagged_rows <= nrow(dat)))
+})
+
 test_that("print.coxph_pipeline and plot.coxph_pipeline run without error", {
   set.seed(3)
   n <- 120

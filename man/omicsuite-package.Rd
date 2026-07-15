@@ -14,8 +14,8 @@ The first release covers Cox proportional hazards survival analysis; see
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/peekei/omicsuite}
-  \item Report bugs at \url{https://github.com/peekei/omicsuite/issues}
+  \item \url{https://github.com/Real-peekei/omicsuite}
+  \item Report bugs at \url{https://github.com/Real-peekei/omicsuite/issues}
 }
 
 }

@@ -1,6 +1,6 @@
 Package: omicsuite
 Title: Portfolio-Grade Pipelines for Survival, RNA-Seq, Epidemic, and Multi-Omics Analysis
-Version: 0.1.0
+Version: 0.1.0.9000
 Authors@R: person("Peekei", role = c("aut", "cre"), email = "you@example.com")
 Description: A collection of high-level analytical pipelines wrapping common
     workflows in biostatistics and bioinformatics. The first release includes
@@ -30,5 +30,5 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
-URL: https://github.com/peekei/omicsuite
-BugReports: https://github.com/peekei/omicsuite/issues
+URL: https://github.com/Real-peekei/omicsuite
+BugReports: https://github.com/Real-peekei/omicsuite/issues
