@@ -1,0 +1,118 @@
+---
+title: "Getting Started: RNA-Seq Mixed Model Pipeline"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started: RNA-Seq Mixed Model Pipeline}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4,
+  eval = FALSE  # model-fitting chunks are illustrative -- see note below
+)
+```
+
+## Why not just fit each gene separately?
+
+The traditional approach to RNA-seq differential expression -- a separate
+negative binomial GLM per gene -- treats every gene as if it told you
+nothing about any other gene. `fit_rnaseq_nb_pipeline()` instead fits one
+multilevel model across all genes at once, with a gene-level random slope
+for the effect of interest. Genes with little data (or noisy counts) get
+pulled ("shrunk") toward the population-average effect; genes with strong,
+consistent evidence keep their own estimate. This is the same partial-pooling
+idea behind `lme4`/`brms` random effects, applied to differential expression.
+
+**Note on this vignette:** the code chunks below are shown but not evaluated
+during package build (`eval = FALSE`), because fitting even a small Stan
+model takes longer than is reasonable for a vignette build step, and
+`brms` is a `Suggests` dependency precisely so `omicsuite` doesn't force a
+Stan toolchain on everyone who only wants the survival module. Copy these
+chunks into an interactive session to run them for real.
+
+```{r setup}
+library(omicsuite)
+library(brms)
+```
+
+## A simulated example
+
+```{r}
+set.seed(1)
+n_genes <- 20
+n_samples <- 16
+
+dat <- expand.grid(
+  gene   = paste0("gene_", seq_len(n_genes)),
+  sample = paste0("sample_", seq_len(n_samples)),
+  stringsAsFactors = FALSE
+)
+dat$condition <- factor(rep(
+  rep(c("control", "treated"), each = n_samples / 2), n_genes
+))
+# a handful of genes get a real treatment effect; the rest are noise
+responsive_genes <- paste0("gene_", 1:4)
+dat$mu <- ifelse(
+  dat$gene %in% responsive_genes & dat$condition == "treated",
+  80, 40
+)
+dat$count <- stats::rnbinom(nrow(dat), mu = dat$mu, size = 4)
+
+fit <- fit_rnaseq_nb_pipeline(
+  data          = dat,
+  gene_var      = "gene",
+  count_var     = "count",
+  condition_var = "condition",
+  sample_var    = "sample",
+  chains = 4, iter = 2000, warmup = 1000,
+  cache_file = "rnaseq_vignette_fit.rds"
+)
+
+fit
+```
+
+## Reading the output
+
+```{r}
+fit$verdicts
+```
+
+`mcmc_convergence` is the one to check before trusting anything else --
+if Rhat is elevated or the effective-sample-size ratio is low, more
+iterations (or a reparameterized model) come before any biological
+interpretation. `dispersion[shape]` is informational: a large shape
+parameter means the negative binomial is behaving close to Poisson for
+this dataset. `posterior_predictive_check` is a visual check, not an
+automatic pass/fail -- see the plot below.
+
+```{r, fig.alt = "Posterior predictive check plot"}
+plot(fit, which = "pp_check")
+```
+
+```{r, fig.alt = "Rhat distribution across parameters"}
+plot(fit, which = "rhat_plot")
+```
+
+## The shrinkage plot
+
+This is the plot that makes the partial-pooling worth it: each gene's
+condition effect, shrunk toward the population-level estimate (dashed
+line) in proportion to how much evidence that gene provides.
+
+```{r, fig.alt = "Gene-level shrinkage plot"}
+plot(fit, which = "shrinkage_plot")
+```
+
+```{r}
+head(fit$shrinkage[order(-abs(fit$shrinkage$gene_deviation)), ])
+```
+
+The genes furthest from the dashed line in the plot -- and at the top of
+this sorted table -- are the ones with the strongest evidence of a
+condition-specific effect after accounting for what every other gene in
+the dataset is doing.

@@ -66,3 +66,18 @@ print_verdicts <- function(verdicts) {
   }
   invisible(verdicts)
 }
+
+#' Check whether the brms package is installed
+#'
+#' Small internal wrapper around [requireNamespace()] so it exists as a real
+#' binding inside the omicsuite namespace and can be mocked in tests --
+#' `requireNamespace()` itself, called unqualified, is only inherited via
+#' lexical scoping from base, so testthat's mocking can't intercept it
+#' directly.
+#'
+#' @return Logical.
+#' @keywords internal
+#' @noRd
+brms_is_available <- function() {
+  requireNamespace("brms", quietly = TRUE)
+}

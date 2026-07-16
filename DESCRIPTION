@@ -1,16 +1,19 @@
 Package: omicsuite
 Title: Portfolio-Grade Pipelines for Survival, RNA-Seq, Epidemic, and Multi-Omics Analysis
-Version: 0.1.0.9000
+Version: 0.2.0
 Authors@R: person("Peekei", role = c("aut", "cre"), email = "you@example.com")
 Description: A collection of high-level analytical pipelines wrapping common
-    workflows in biostatistics and bioinformatics. The first release includes
-    Cox proportional hazards survival analysis with a full diagnostic suite:
+    workflows in biostatistics and bioinformatics. Includes Cox proportional
+    hazards survival analysis with a full diagnostic suite:
     unadjusted-versus-adjusted comparison, global and covariate-level
     proportional hazards testing, influence diagnostics (dfbeta/dfbetas),
     functional form checks via martingale residuals, and a written assumption
     verification verdict, in the style of a methods section rather than a
-    single point estimate. Bayesian hierarchical mixed models for RNA-seq,
-    stochastic SIR/SEIR epidemic simulation, and multi-omics integration
+    single point estimate. Also includes a Bayesian hierarchical negative
+    binomial mixed model pipeline for longitudinal RNA-seq count data, with
+    gene-level partial pooling of the effect of interest, convergence
+    diagnostics, posterior predictive checks, and a shrinkage plot.
+    Stochastic SIR/SEIR epidemic simulation and multi-omics integration
     modules are planned for subsequent releases.
 License: MIT + file LICENSE
 Encoding: UTF-8
@@ -26,7 +29,8 @@ Imports:
 Suggests:
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown
+    rmarkdown,
+    brms (>= 2.20.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0

@@ -1,3 +1,22 @@
+# omicsuite 0.2.0
+
+* Bug fix: `fit_rnaseq_nb_pipeline()`'s `seed` argument defaulted to `NULL`,
+  which `brms::brm()` cannot coerce to a numeric value (it expects `NA` or a
+  real number). Default changed to `NA`, matching `brms`'s own default.
+* New: `fit_rnaseq_nb_pipeline()`, a Bayesian hierarchical negative binomial
+  mixed model for longitudinal RNA-seq counts (via `brms`), with:
+  - gene-level random slope for the effect of interest (partial pooling
+    across genes rather than one GLM per gene)
+  - optional subject-level random intercept for repeated-measures designs
+  - a library-size offset computed automatically, or supplied directly
+  - MCMC convergence diagnostics (Rhat, effective-sample-size ratio)
+  - a dispersion check on the negative binomial shape parameter
+  - a posterior predictive check plot
+  - a shrinkage plot showing each gene's partially pooled effect estimate
+  - `print()`, `summary()`, and `plot()` S3 methods
+  - `brms` is a `Suggests`, not a hard dependency, since it requires a Stan
+    toolchain -- the survival module works without installing it.
+
 # omicsuite 0.1.0.9000
 
 * Bug fix: `fit_coxph_pipeline()` errored (`arguments imply differing number
