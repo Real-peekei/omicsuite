@@ -1,0 +1,102 @@
+---
+title: "Getting Started: Multi-Omics Integration Pipeline"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started: Multi-Omics Integration Pipeline}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4
+)
+```
+
+```{r setup}
+library(omicsuite)
+```
+
+## Why not just PCA on the concatenated matrix?
+
+Stacking a transcriptomics block with 20,000 features and a proteomics
+block with 200 features into one matrix and running PCA gives you a result
+dominated by whichever block has more features -- not necessarily the one
+with more *signal*. `integrate_multiomics()` uses regularized generalized
+canonical correlation analysis (RGCCA) instead, which finds components that
+maximize covariation *between* blocks, so each layer contributes based on
+how much it agrees with the others, not how large it is.
+
+## A simulated example
+
+```{r}
+set.seed(1)
+n <- 60
+sample_ids <- paste0("patient_", seq_len(n))
+
+# two omics layers with a shared latent signal on the first axis
+transcriptomics <- matrix(
+  rnorm(n * 30), nrow = n,
+  dimnames = list(sample_ids, paste0("gene_", 1:30))
+)
+proteomics <- matrix(
+  rnorm(n * 15), nrow = n,
+  dimnames = list(sample_ids, paste0("protein_", 1:15))
+)
+
+subtype <- factor(rep(c("subtype_A", "subtype_B"), each = n / 2))
+shared_signal <- ifelse(subtype == "subtype_A", 1.5, -1.5) + rnorm(n, sd = 0.5)
+transcriptomics[, 1] <- transcriptomics[, 1] + shared_signal
+proteomics[, 1] <- proteomics[, 1] + shared_signal
+
+fit <- integrate_multiomics(
+  blocks = list(transcriptomics = transcriptomics, proteomics = proteomics),
+  group  = stats::setNames(as.character(subtype), sample_ids),
+  ncomp  = 2,
+  n_boot = 30,
+  seed   = 1
+)
+
+fit
+```
+
+## Reading the verdict table
+
+```{r}
+fit$verdicts
+```
+
+`sample_alignment` confirms no samples were silently dropped when blocks
+were matched by row name. `variance_explained[<block>]` is informational --
+it tells you how much of each block's own variance the shared components
+capture, which is a quick way to spot a block that isn't really
+contributing to the integration. `loading_stability[<block>]` is the one
+worth taking seriously before reporting a feature ranking: it's a
+case-resampling bootstrap sign-agreement rate for each block's
+top-loading features, not just a fit statistic.
+
+## Do the shared components separate the subtypes?
+
+```{r, fig.alt = "Sample scores on the first two shared components, colored by subtype"}
+plot(fit, which = "block_scores")
+```
+
+```{r, fig.alt = "Variance explained per block"}
+plot(fit, which = "variance_explained")
+```
+
+```{r, fig.alt = "Bootstrap loading stability by block"}
+plot(fit, which = "stability")
+```
+
+```{r}
+head(fit$stability[order(-fit$stability$stability), ])
+```
+
+The features at the top of that sorted table are the ones whose
+contribution to the shared component survived resampling most
+consistently -- a better place to start a follow-up biological
+interpretation than the raw loading magnitude alone.

@@ -1,3 +1,19 @@
+# omicsuite 0.4.0
+
+* New: `integrate_multiomics()`, a multi-omics data integration pipeline via
+  regularized generalized canonical correlation analysis (`RGCCA`), with:
+  - automatic sample alignment across blocks by row name, with a verdict
+    flagging any dropped samples
+  - per-block average variance explained (AVE) per component
+  - a case-resampling bootstrap loading-stability check (sign-agreement
+    rate for each block's top-loading features), built independently of
+    `RGCCA::rgcca_bootstrap()`'s internals
+  - sample-score plots faceted by block, optionally colored by a supplied
+    group/phenotype label
+  - `print()`, `summary()`, and `plot()` S3 methods
+  - `RGCCA` is a hard `Imports` (CRAN-only, no compiler toolchain needed,
+    same risk profile as `survival`)
+
 # omicsuite 0.3.0
 
 * New: `simulate_gillespie_epidemic()`, a stochastic SIR/SEIR epidemic

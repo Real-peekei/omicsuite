@@ -1,6 +1,6 @@
 Package: omicsuite
 Title: Portfolio-Grade Pipelines for Survival, RNA-Seq, Epidemic, and Multi-Omics Analysis
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: person("Peekei", role = c("aut", "cre"), email = "you@example.com")
 Description: A collection of high-level analytical pipelines wrapping common
     workflows in biostatistics and bioinformatics. Includes Cox proportional
@@ -16,8 +16,10 @@ Description: A collection of high-level analytical pipelines wrapping common
     includes stochastic SIR/SEIR epidemic simulation via Gillespie's direct
     method, with an ensemble summary across realizations, final-size and
     peak-timing distributions, the implied basic reproduction number, and
-    the probability of early stochastic extinction. Multi-omics integration
-    is planned for a subsequent release.
+    the probability of early stochastic extinction. Also includes multi-omics
+    data integration via regularized generalized canonical correlation
+    analysis, with per-block variance explained, a bootstrap-based loading
+    stability check, and sample-score visualization across blocks.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -28,7 +30,8 @@ Imports:
     survival,
     ggplot2,
     stats,
-    rlang
+    rlang,
+    RGCCA
 Suggests:
     testthat (>= 3.0.0),
     knitr,

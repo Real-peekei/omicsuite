@@ -6,9 +6,8 @@ checks, plots, and a written verdict you'd want before reporting the
 result -- the same level of rigor as a methods section, not just a point
 estimate.
 
-**Status:** v0.3.0 ships the survival, RNA-seq, and epidemic modules.
-Multi-omics integration is planned for a subsequent release (see
-`NEWS.md`).
+**Status:** v0.4.0 ships all four planned modules: survival, RNA-seq,
+epidemic, and multi-omics integration (see `NEWS.md`).
 
 ## Installation
 
@@ -158,4 +157,33 @@ fit_seir <- simulate_gillespie_epidemic(
 | Outbreak trajectory | Median + 5-95% envelope across realizations, with individual realizations overlaid | `fit$summary`, `fit$plots$trajectory_plot` |
 | Final size / peak timing | Distributions across realizations | `fit$final_size`, `fit$peak_time`, `fit$plots$final_size_hist`, `fit$plots$peak_time_hist` |
 
+## Multi-omics: quick example
+
+```r
+library(omicsuite)
+
+set.seed(1)
+n <- 60
+sample_ids <- paste0("patient_", seq_len(n))
+transcriptomics <- matrix(rnorm(n * 30), nrow = n, dimnames = list(sample_ids, paste0("gene_", 1:30)))
+proteomics <- matrix(rnorm(n * 15), nrow = n, dimnames = list(sample_ids, paste0("protein_", 1:15)))
+
+fit <- integrate_multiomics(
+  blocks = list(transcriptomics = transcriptomics, proteomics = proteomics),
+  ncomp = 2, n_boot = 30, seed = 1
+)
+
+fit$verdicts
+plot(fit, which = "block_scores")
+plot(fit, which = "stability")
+```
+
+## What `integrate_multiomics()` checks
+
+| Check | Method | Where to look |
+|---|---|---|
+| Sample alignment | Row-name intersection across blocks | `fit$verdicts` (`sample_alignment`) |
+| Variance explained | Per-block AVE from `RGCCA::rgcca()` | `fit$variance_explained`, `fit$plots$variance_explained` |
+| Loading stability | Case-resampling bootstrap sign-agreement rate, top loadings per block | `fit$stability`, `fit$plots$stability` |
+| Sample structure | Scores on shared components, faceted by block, optionally colored by group | `fit$scores`, `fit$plots$block_scores` |
 
