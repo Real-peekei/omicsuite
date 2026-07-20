@@ -6,9 +6,9 @@ checks, plots, and a written verdict you'd want before reporting the
 result -- the same level of rigor as a methods section, not just a point
 estimate.
 
-**Status:** v0.2.0 ships the survival and RNA-seq modules. Stochastic
-SIR/SEIR epidemic simulation and multi-omics integration are planned for
-subsequent releases (see `NEWS.md`).
+**Status:** v0.3.0 ships the survival, RNA-seq, and epidemic modules.
+Multi-omics integration is planned for a subsequent release (see
+`NEWS.md`).
 
 ## Installation
 
@@ -119,4 +119,43 @@ plot(fit, which = "shrinkage_plot")
 | Dispersion | Posterior summary of the NB shape parameter | `fit$dispersion` |
 | Posterior predictive fit | `brms::pp_check()` overlay (visual review) | `fit$plots$pp_check` |
 | Per-gene effect | Partially pooled estimate vs. population-level estimate | `fit$shrinkage`, `fit$plots$shrinkage_plot` |
+
+## Epidemic: quick example
+
+```r
+library(omicsuite)
+
+fit <- simulate_gillespie_epidemic(
+  model = "SIR",
+  initial_state = c(S = 999, I = 1, R = 0),
+  params = list(beta = 0.4, gamma = 0.1),
+  t_max = 100, n_sim = 100, seed = 1
+)
+
+print(fit)                        # R0, extinction rate, verdicts
+plot(fit, which = "trajectory_plot")
+plot(fit, which = "final_size_hist")
+```
+
+For SEIR, add an `E` compartment to `initial_state` and a `sigma` rate
+(1/mean incubation period) to `params`:
+
+```r
+fit_seir <- simulate_gillespie_epidemic(
+  model = "SEIR",
+  initial_state = c(S = 999, E = 0, I = 1, R = 0),
+  params = list(beta = 0.4, sigma = 0.2, gamma = 0.1),
+  t_max = 150, n_sim = 100, seed = 1
+)
+```
+
+## What `simulate_gillespie_epidemic()` checks
+
+| Check | Method | Where to look |
+|---|---|---|
+| Basic reproduction number | `beta / gamma` (same threshold quantity for SIR and SEIR) | `fit$r0` |
+| Stochastic extinction | Proportion of realizations with final size below a threshold fraction of the population | `fit$prop_extinct`, `fit$is_extinct` |
+| Outbreak trajectory | Median + 5-95% envelope across realizations, with individual realizations overlaid | `fit$summary`, `fit$plots$trajectory_plot` |
+| Final size / peak timing | Distributions across realizations | `fit$final_size`, `fit$peak_time`, `fit$plots$final_size_hist`, `fit$plots$peak_time_hist` |
+
 

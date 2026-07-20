@@ -1,3 +1,16 @@
+# omicsuite 0.3.0
+
+* New: `simulate_gillespie_epidemic()`, a stochastic SIR/SEIR epidemic
+  simulation pipeline via Gillespie's direct method, with:
+  - exact stochastic simulation (no time-discretization approximation)
+  - an ensemble summary (median + 5-95% envelope) across realizations
+  - final outbreak size and peak-timing distributions across realizations
+  - the implied basic reproduction number (`beta / gamma`)
+  - the proportion of realizations that fade out early by chance --
+    a distinction a deterministic ODE model can't show
+  - `print()`, `summary()`, and `plot()` S3 methods
+  - pure base R + ggplot2; no additional hard or suggested dependency
+
 # omicsuite 0.2.0
 
 * Bug fix: `fit_rnaseq_nb_pipeline()`'s `seed` argument defaulted to `NULL`,
