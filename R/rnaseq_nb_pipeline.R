@@ -311,6 +311,12 @@ fit_rnaseq_nb_pipeline <- function(data,
   )
 }
 
+#' Print an `rnaseq_nb_pipeline` object
+#'
+#' @param x An `rnaseq_nb_pipeline` object, as returned by
+#'   [fit_rnaseq_nb_pipeline()].
+#' @param ... Ignored.
+#' @return Invisibly returns `x`.
 #' @export
 print.rnaseq_nb_pipeline <- function(x, ...) {
   cat("<omicsuite RNA-seq negative binomial mixed model pipeline>\n\n")
@@ -320,6 +326,13 @@ print.rnaseq_nb_pipeline <- function(x, ...) {
   invisible(x)
 }
 
+#' Summarize an `rnaseq_nb_pipeline` object
+#'
+#' @param object An `rnaseq_nb_pipeline` object, as returned by
+#'   [fit_rnaseq_nb_pipeline()].
+#' @param ... Ignored.
+#' @return A list with elements `model_summary` (the `brmsfit` summary),
+#'   `convergence`, `dispersion`, and `verdicts`.
 #' @export
 summary.rnaseq_nb_pipeline <- function(object, ...) {
   list(

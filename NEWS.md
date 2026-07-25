@@ -18,6 +18,14 @@
 * Added `make_note()`, an internal helper for info/review/interpretation
   verdict rows, replacing the `make_verdict(passed = NA)` + manual override
   pattern used ad hoc in earlier modules.
+* Fixed: the pkgdown site failed to build (`reference[1].contents[2]
+  (print.coxph_pipeline) must be a known topic name or alias`) because
+  `print.*`/`summary.*` S3 methods across all four modules only had a bare
+  `@export` tag with no title/description, so roxygen2 never generated a
+  `.Rd` page for them -- `_pkgdown.yml` was referencing topics that didn't
+  exist. Added full docblocks (title, `@param`, `@return`) to all eight
+  `print.*`/`summary.*` methods, matching the documentation level already
+  given to `plot.*`.
 * Added a pkgdown documentation site (https://real-peekei.github.io/omicsuite/),
   auto-built and deployed to GitHub Pages via GitHub Actions on every push to
   `main`. Reference pages are grouped by module and all four vignettes are

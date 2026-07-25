@@ -360,6 +360,14 @@ fit_coxph_pipeline <- function(data,
   )
 }
 
+#' Print a `coxph_pipeline` object
+#'
+#' Prints the unadjusted (and adjusted, if fit) Cox model summaries followed
+#' by the full verdict table.
+#'
+#' @param x A `coxph_pipeline` object, as returned by [fit_coxph_pipeline()].
+#' @param ... Ignored.
+#' @return Invisibly returns `x`.
 #' @export
 print.coxph_pipeline <- function(x, ...) {
   cat("<omicsuite Cox PH pipeline>\n\n")
@@ -374,6 +382,14 @@ print.coxph_pipeline <- function(x, ...) {
   invisible(x)
 }
 
+#' Summarize a `coxph_pipeline` object
+#'
+#' @param object A `coxph_pipeline` object, as returned by
+#'   [fit_coxph_pipeline()].
+#' @param ... Ignored.
+#' @return A list with elements `unadjusted` and `adjusted` (each a
+#'   `summary.coxph` object, `adjusted` being `NULL` if no adjusted model was
+#'   fit), `ph_test`, and `verdicts`.
 #' @export
 summary.coxph_pipeline <- function(object, ...) {
   list(

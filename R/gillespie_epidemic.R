@@ -332,6 +332,12 @@ run_gillespie_seir <- function(S0, E0, I0, R0, beta, sigma, gamma, t_max) {
   )
 }
 
+#' Print a `gillespie_epidemic` object
+#'
+#' @param x A `gillespie_epidemic` object, as returned by
+#'   [simulate_gillespie_epidemic()].
+#' @param ... Ignored.
+#' @return Invisibly returns `x`.
 #' @export
 print.gillespie_epidemic <- function(x, ...) {
   cat(sprintf("<omicsuite %s Gillespie epidemic simulation>\n\n", x$model))
@@ -348,6 +354,15 @@ print.gillespie_epidemic <- function(x, ...) {
   invisible(x)
 }
 
+#' Summarize a `gillespie_epidemic` object
+#'
+#' @param object A `gillespie_epidemic` object, as returned by
+#'   [simulate_gillespie_epidemic()].
+#' @param ... Ignored.
+#' @return A list with elements `r0`, `prop_extinct`, `final_size` (a
+#'   `summary()` of the final-size distribution across realizations),
+#'   `peak_time` (likewise, restricted to non-extinct realizations), and
+#'   `verdicts`.
 #' @export
 summary.gillespie_epidemic <- function(object, ...) {
   list(

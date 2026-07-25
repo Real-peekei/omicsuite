@@ -342,6 +342,12 @@ integrate_multiomics <- function(blocks,
   )
 }
 
+#' Print a `multiomics_pipeline` object
+#'
+#' @param x A `multiomics_pipeline` object, as returned by
+#'   [integrate_multiomics()].
+#' @param ... Ignored.
+#' @return Invisibly returns `x`.
 #' @export
 print.multiomics_pipeline <- function(x, ...) {
   cat("<omicsuite multi-omics RGCCA integration pipeline>\n\n")
@@ -351,6 +357,13 @@ print.multiomics_pipeline <- function(x, ...) {
   invisible(x)
 }
 
+#' Summarize a `multiomics_pipeline` object
+#'
+#' @param object A `multiomics_pipeline` object, as returned by
+#'   [integrate_multiomics()].
+#' @param ... Ignored.
+#' @return A list with elements `variance_explained`, `stability`, and
+#'   `verdicts`.
 #' @export
 summary.multiomics_pipeline <- function(object, ...) {
   list(
