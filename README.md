@@ -1,13 +1,19 @@
 # omicsuite
 
-Portfolio-grade analytical pipelines for biostatistics and bioinformatics.
-Each pipeline in this package returns a fitted model *plus* the diagnostic
-checks, plots, and a written verdict you'd want before reporting the
-result -- the same level of rigor as a methods section, not just a point
-estimate.
+[![pkgdown site](https://img.shields.io/badge/docs-pkgdown-3B6E8F)](https://real-peekei.github.io/omicsuite/)
 
-**Status:** v0.4.0 ships all four planned modules: survival, RNA-seq,
-epidemic, and multi-omics integration (see `NEWS.md`).
+An extensible collection of analytical pipelines for biostatistics,
+bioinformatics, and computational biology. Every pipeline follows the same
+contract: fit a model, run the diagnostic checks a careful methods section
+would include, render `ggplot2` plots, and return a structured verdict
+table -- assumption checks, informational notes, and a plain-language
+interpretation of the fitted effect -- rather than a bare point estimate.
+
+**Status:** v0.4.1 ships four modules (survival, RNA-seq, epidemic,
+multi-omics), a documentation site, and hazard-ratio interpretation verdicts
+in the survival module (template for the other three). See `NEWS.md` and
+the [package website](https://real-peekei.github.io/omicsuite/) for
+details.
 
 ## Installation
 

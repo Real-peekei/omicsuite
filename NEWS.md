@@ -1,3 +1,29 @@
+# omicsuite 0.4.1
+
+* Reframed the package as an extensible collection rather than fixed at four
+  modules -- `Title`/`Description` now describe the shared pipeline contract
+  (fit + diagnose + plot + verdict) so future additions across biostatistics,
+  bioinformatics, and computational biology fit the same shape.
+* New: `fit_coxph_pipeline()` verdicts now include an `"interpretation"` row
+  per model term -- a plain-language restatement of the hazard ratio, its
+  95% CI, and significance (e.g. "a one-unit increase in `age` is associated
+  with a 3.2% higher hazard... statistically significant, p = 0.01"),
+  distinguishing numeric covariates ("one-unit increase") from factor levels
+  ("this level vs. the reference"). This is the template for adding the same
+  interpretation layer to the other three modules.
+* Fixed: `print_verdicts()` labeled every non-`"pass"` verdict as `"FLAG"`,
+  including the pre-existing `"info"`/`"review"` rows in the RNA-seq and
+  epidemic modules -- misleading, since those aren't failed checks. Now
+  labeled distinctly (`INFO`, `RVW`, `INTP`, `FLAG`, `OK`).
+* Added `make_note()`, an internal helper for info/review/interpretation
+  verdict rows, replacing the `make_verdict(passed = NA)` + manual override
+  pattern used ad hoc in earlier modules.
+* Added a pkgdown documentation site (https://real-peekei.github.io/omicsuite/),
+  auto-built and deployed to GitHub Pages via GitHub Actions on every push to
+  `main`. Reference pages are grouped by module and all four vignettes are
+  linked from the site navbar. CI deliberately does not install `brms` --
+  see the comment in `.github/workflows/pkgdown.yaml`.
+
 # omicsuite 0.4.0
 
 * New: `integrate_multiomics()`, a multi-omics data integration pipeline via

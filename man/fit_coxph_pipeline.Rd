@@ -66,8 +66,10 @@ fitted on), and \code{n_used}.}
 vs. covariate value) for each continuous covariate in \code{covariates}.}
 \item{plots}{A named list of \code{ggplot} objects: \code{ph_plot}, \code{influence_plot},
 and one \verb{functional_form_<var>} entry per continuous covariate.}
-\item{verdicts}{A data.frame summarizing every diagnostic check, its
-pass/flag status, and a short interpretive note.}
+\item{verdicts}{A data.frame summarizing every diagnostic check
+(\code{"pass"}/\code{"flagged"}), each functional-form check (\code{"review"}), and a
+plain-language hazard-ratio interpretation for every model term
+(\code{"interpretation"}).}
 \item{alpha}{The significance threshold used.}
 }
 }
@@ -75,8 +77,9 @@ pass/flag status, and a short interpretive note.}
 Fits a Cox proportional hazards model and runs the diagnostic suite you'd
 want in a methods section before trusting the hazard ratios: an
 unadjusted-versus-adjusted comparison, global and covariate-level
-proportional hazards testing, influence diagnostics, and functional form
-checks for continuous covariates via martingale residuals.
+proportional hazards testing, influence diagnostics, functional form
+checks for continuous covariates via martingale residuals, and a
+plain-language interpretation of every fitted hazard ratio.
 }
 \examples{
 \donttest{

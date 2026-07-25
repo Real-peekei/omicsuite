@@ -1,0 +1,69 @@
+url: https://real-peekei.github.io/omicsuite/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bslib:
+    primary: "#3B6E8F"
+
+home:
+  title: omicsuite
+  description: >
+    Portfolio-grade analytical pipelines for biostatistics, bioinformatics,
+    and computational biology -- each pipeline returns a fitted model plus
+    the diagnostics, plots, and a written verdict you'd want before
+    reporting the result.
+
+navbar:
+  structure:
+    left: [intro, reference, articles, news]
+    right: [github]
+  components:
+    articles:
+      text: Vignettes
+      menu:
+      - text: "Survival: Cox PH pipeline"
+        href: articles/getting-started.html
+      - text: "RNA-seq: Bayesian NB mixed model"
+        href: articles/rnaseq-nb-pipeline.html
+      - text: "Epidemic: Gillespie SIR/SEIR"
+        href: articles/gillespie-epidemic.html
+      - text: "Multi-omics: RGCCA integration"
+        href: articles/multiomics-pipeline.html
+
+reference:
+- title: Survival
+  desc: Cox proportional hazards pipeline with a full diagnostic suite
+  contents:
+  - fit_coxph_pipeline
+  - print.coxph_pipeline
+  - summary.coxph_pipeline
+  - plot.coxph_pipeline
+
+- title: RNA-seq
+  desc: Bayesian hierarchical negative binomial mixed model for longitudinal counts
+  contents:
+  - fit_rnaseq_nb_pipeline
+  - print.rnaseq_nb_pipeline
+  - summary.rnaseq_nb_pipeline
+  - plot.rnaseq_nb_pipeline
+
+- title: Epidemic
+  desc: Stochastic SIR/SEIR simulation via Gillespie's direct method
+  contents:
+  - simulate_gillespie_epidemic
+  - print.gillespie_epidemic
+  - summary.gillespie_epidemic
+  - plot.gillespie_epidemic
+
+- title: Multi-omics
+  desc: Data integration via regularized generalized canonical correlation analysis
+  contents:
+  - integrate_multiomics
+  - print.multiomics_pipeline
+  - summary.multiomics_pipeline
+  - plot.multiomics_pipeline
+
+- title: Package
+  contents:
+  - omicsuite-package

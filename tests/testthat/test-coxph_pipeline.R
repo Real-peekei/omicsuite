@@ -99,6 +99,39 @@ test_that("fit_coxph_pipeline handles NA values in an adjust_for covariate witho
   expect_true(all(fit$influence$flagged_rows <= nrow(dat)))
 })
 
+test_that("interpretation verdicts report the correct HR and distinguish numeric vs. factor terms", {
+  set.seed(5)
+  n <- 200
+  dat <- data.frame(
+    time = stats::rexp(n, rate = 0.04),
+    event = stats::rbinom(n, 1, 0.8),
+    arm = factor(sample(c("control", "treatment"), n, replace = TRUE)),
+    age = stats::rnorm(n, 55, 10)
+  )
+
+  fit <- fit_coxph_pipeline(
+    data = dat, time_var = "time", event_var = "event",
+    covariates = "arm", adjust_for = "age"
+  )
+
+  interp <- fit$verdicts[fit$verdicts$verdict == "interpretation", ]
+  expect_identical(nrow(interp), length(stats::coef(fit$primary_model)))
+  expect_true(all(grepl("^interpretation\\[", interp$check)))
+
+  # statistic column should be the hazard ratio, i.e. exp(coefficient)
+  coef_est <- stats::coef(fit$primary_model)
+  hr_expected <- exp(coef_est)
+  hr_reported <- stats::setNames(interp$statistic, sub("^interpretation\\[(.*)\\]$", "\\1", interp$check))
+  expect_equal(hr_reported[names(hr_expected)], hr_expected, tolerance = 1e-8)
+
+  # the factor term (arm) should get "vs. the reference level" wording;
+  # the numeric term (age) should get "one-unit increase" wording
+  arm_note <- interp$note[grepl("^interpretation\\[armtreatment\\]$", interp$check)]
+  age_note <- interp$note[grepl("^interpretation\\[age\\]$", interp$check)]
+  expect_true(grepl("reference level", arm_note))
+  expect_true(grepl("one-unit increase", age_note))
+})
+
 test_that("print.coxph_pipeline and plot.coxph_pipeline run without error", {
   set.seed(3)
   n <- 120

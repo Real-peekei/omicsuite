@@ -54,17 +54,53 @@ assert_columns <- function(data, cols, data_name = "data") {
 
 #' Print a verdict table in a readable form
 #'
-#' @param verdicts A data.frame produced by `make_verdict()` rows.
+#' @param verdicts A data.frame produced by `make_verdict()`/`make_note()` rows.
 #' @return Invisibly returns `verdicts`.
 #' @keywords internal
 #' @noRd
 print_verdicts <- function(verdicts) {
+  tag_for <- function(v) {
+    switch(v,
+      pass = "OK  ",
+      flagged = "FLAG",
+      info = "INFO",
+      review = "RVW ",
+      interpretation = "INTP",
+      "NOTE"
+    )
+  }
   for (i in seq_len(nrow(verdicts))) {
     v <- verdicts[i, ]
-    flag <- if (v$verdict == "pass") "OK  " else "FLAG"
-    cat(sprintf("[%s] %-28s %s\n", flag, v$check, v$note))
+    cat(sprintf("[%s] %-28s %s\n", tag_for(v$verdict), v$check, v$note))
   }
   invisible(verdicts)
+}
+
+#' Build an informational, review, or interpretive verdict record
+#'
+#' Unlike `make_verdict()`, these rows don't represent a pass/fail assumption
+#' check -- `label` should be `"info"` (a fitted-value note, not a check),
+#' `"review"` (needs visual/manual inspection, not auto-scored), or
+#' `"interpretation"` (a plain-language restatement of an effect estimate and
+#' its uncertainty).
+#'
+#' @param check Character. Name of the check/note.
+#' @param label Character. One of `"info"`, `"review"`, `"interpretation"`.
+#' @param statistic Optional numeric statistic.
+#' @param p_value Optional numeric p-value.
+#' @param note Character. Free-text note.
+#' @return A one-row data.frame.
+#' @keywords internal
+#' @noRd
+make_note <- function(check, label, statistic = NA_real_, p_value = NA_real_, note = "") {
+  data.frame(
+    check = check,
+    verdict = label,
+    statistic = statistic,
+    p_value = p_value,
+    note = note,
+    stringsAsFactors = FALSE
+  )
 }
 
 #' Check whether the brms package is installed

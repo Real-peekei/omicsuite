@@ -3,8 +3,9 @@
 #' Fits a Cox proportional hazards model and runs the diagnostic suite you'd
 #' want in a methods section before trusting the hazard ratios: an
 #' unadjusted-versus-adjusted comparison, global and covariate-level
-#' proportional hazards testing, influence diagnostics, and functional form
-#' checks for continuous covariates via martingale residuals.
+#' proportional hazards testing, influence diagnostics, functional form
+#' checks for continuous covariates via martingale residuals, and a
+#' plain-language interpretation of every fitted hazard ratio.
 #'
 #' @param data A data.frame containing the survival data.
 #' @param time_var Character. Name of the time-to-event column.
@@ -46,8 +47,10 @@
 #'     vs. covariate value) for each continuous covariate in `covariates`.}
 #'   \item{plots}{A named list of `ggplot` objects: `ph_plot`, `influence_plot`,
 #'     and one `functional_form_<var>` entry per continuous covariate.}
-#'   \item{verdicts}{A data.frame summarizing every diagnostic check, its
-#'     pass/flag status, and a short interpretive note.}
+#'   \item{verdicts}{A data.frame summarizing every diagnostic check
+#'     (`"pass"`/`"flagged"`), each functional-form check (`"review"`), and a
+#'     plain-language hazard-ratio interpretation for every model term
+#'     (`"interpretation"`).}
 #'   \item{alpha}{The significance threshold used.}
 #' }
 #'
@@ -224,7 +227,62 @@ fit_coxph_pipeline <- function(data,
     ff_verdicts$verdict <- "review"
   }
 
-  verdicts <- rbind(ph_verdicts, influence_verdict, ff_verdicts)
+  # --- effect interpretation (hazard ratios in plain language) -----------------
+  # Distinct from the assumption-diagnostic verdicts above: this restates
+  # each fitted coefficient as a hazard ratio with its CI and significance,
+  # in plain language -- mechanical restatement of the estimate, not a
+  # biological or clinical claim about what caused it.
+  coef_est <- stats::coef(primary_model)
+  model_summary <- summary(primary_model)
+  coef_table <- model_summary$coefficients
+  p_col <- grep("^Pr\\(", colnames(coef_table), value = TRUE)[1]
+  coef_p <- stats::setNames(coef_table[, p_col], rownames(coef_table))
+  ci <- stats::confint(primary_model)
+  hr <- exp(coef_est)
+  # confint() on a coxph model silently drops the row names when there's
+  # exactly one coefficient (a matrix-to-vector simplification quirk of
+  # `[.matrix` when both margins could be seen as trivial) -- set them
+  # explicitly rather than relying on them surviving the subsetting.
+  hr_lower <- stats::setNames(exp(ci[, 1]), rownames(ci))
+  hr_upper <- stats::setNames(exp(ci[, 2]), rownames(ci))
+
+  # Map each fitted term (e.g. "armtreatment") back to the variable it came
+  # from (e.g. "arm"), so the wording can distinguish "one-unit increase"
+  # (numeric covariates) from "this level vs. the reference" (factor levels).
+  term_source_var <- vapply(names(coef_est), function(term) {
+    candidates <- all_model_vars[vapply(all_model_vars, function(v) startsWith(term, v), logical(1))]
+    if (length(candidates) == 0) NA_character_ else candidates[which.max(nchar(candidates))]
+  }, character(1))
+
+  interpretation_verdicts <- do.call(rbind, lapply(names(coef_est), function(term) {
+    var_i <- term_source_var[[term]]
+    is_num <- !is.na(var_i) && var_i %in% numeric_covs
+    pct_change <- (hr[[term]] - 1) * 100
+    direction <- if (hr[[term]] < 1) "lower" else "higher"
+    p_i <- coef_p[[term]]
+    sig <- if (!is.na(p_i) && p_i < alpha) {
+      "statistically significant"
+    } else {
+      "not statistically significant at this alpha"
+    }
+    subject <- if (is_num) {
+      sprintf("a one-unit increase in `%s`", var_i)
+    } else {
+      sprintf("this level of `%s` (vs. the reference level)", if (!is.na(var_i)) var_i else term)
+    }
+    make_note(
+      check = sprintf("interpretation[%s]", term),
+      label = "interpretation",
+      statistic = hr[[term]],
+      p_value = p_i,
+      note = sprintf(
+        "HR = %.3f (95%% CI [%.3f, %.3f]). %s is associated with a %.1f%% %s hazard at any given time, holding other model terms fixed (%s, p = %.4f).",
+        hr[[term]], hr_lower[[term]], hr_upper[[term]], subject, abs(pct_change), direction, sig, p_i
+      )
+    )
+  }))
+
+  verdicts <- rbind(ph_verdicts, influence_verdict, ff_verdicts, interpretation_verdicts)
   rownames(verdicts) <- NULL
 
   # --- plots -------------------------------------------------------------------
