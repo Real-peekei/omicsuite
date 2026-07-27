@@ -1,3 +1,27 @@
+# omicsuite 0.4.2
+
+* Replicated the `"interpretation"` verdict pattern (introduced in the
+  survival module in v0.4.1) to the other three modules:
+  - `fit_rnaseq_nb_pipeline()`: a new `interpretation[<condition_coef>]` row
+    restates the population-level `condition_var` effect as a fold-change
+    with its 95% credible interval, notes whether that interval excludes no
+    change, and names the genes with the strongest partially pooled
+    evidence.
+  - `simulate_gillespie_epidemic()`: the existing R0 and extinction-
+    probability notes were relabeled from `"info"` to `"interpretation"`
+    (they already restated a fitted quantity in plain language, just under
+    the wrong category), and a new `interpretation[final_size]` row
+    summarizes the final-size distribution (median, IQR) among realizations
+    that became a sustained outbreak.
+  - `integrate_multiomics()`: a new `alpha_group_separation` argument and,
+    when `group` is supplied, a per-block `interpretation[group_separation_<block>]`
+    row -- a Kruskal-Wallis test of whether each block's shared component
+    actually separates the supplied group labels, not just a plot you have
+    to eyeball.
+  All three follow the same restraint documented in `CONTRIBUTING.md`:
+  mechanical restatement of a fitted estimate and its uncertainty, never a
+  causal or biological claim about why the effect exists.
+
 # omicsuite 0.4.1
 
 * Reframed the package as an extensible collection rather than fixed at four

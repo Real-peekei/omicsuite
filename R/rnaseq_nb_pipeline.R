@@ -67,8 +67,9 @@
 #'     binomial shape parameter.}
 #'   \item{plots}{A named list of `ggplot` objects: `pp_check`,
 #'     `shrinkage_plot`, and `rhat_plot`.}
-#'   \item{verdicts}{A data.frame summarizing convergence, posterior
-#'     predictive fit, and dispersion, in the same style as
+#'   \item{verdicts}{A data.frame summarizing convergence, dispersion,
+#'     posterior predictive fit, and a plain-language interpretation of the
+#'     population-level `condition_var` effect, in the same style as
 #'     [fit_coxph_pipeline()].}
 #' }
 #'
@@ -218,9 +219,6 @@ fit_rnaseq_nb_pipeline <- function(data,
   )
   ppcheck_verdict$verdict <- "review"
 
-  verdicts <- rbind(convergence_verdict, dispersion_verdict, ppcheck_verdict)
-  rownames(verdicts) <- NULL
-
   # --- shrinkage (gene-level partial pooling of condition_var) ------------------
   fixef_est <- brms::fixef(model)
   condition_coef_names <- grep(
@@ -250,6 +248,44 @@ fit_rnaseq_nb_pipeline <- function(data,
   shrinkage$population_estimate <- population_estimate
   shrinkage <- shrinkage[order(shrinkage$pooled_estimate), ]
   shrinkage$gene <- factor(shrinkage$gene, levels = shrinkage$gene)
+
+  # --- effect interpretation (population-level condition effect, plain language) ----
+  # fixef_est's Estimate/Q2.5/Q97.5 are on the log scale (negbinomial's
+  # default link) -- exponentiate for a fold-change reading, but check
+  # credibility on the log scale, where "no change" is 0, not a fold-change
+  # of 1. This restates the fitted population-level effect; it says nothing
+  # about which genes are driving it beyond naming the largest deviations
+  # already computed in `shrinkage`.
+  log_ci_lower <- fixef_est[primary_coef, "Q2.5"]
+  log_ci_upper <- fixef_est[primary_coef, "Q97.5"]
+  fold_change <- exp(population_estimate)
+  fold_change_lower <- exp(log_ci_lower)
+  fold_change_upper <- exp(log_ci_upper)
+  pct_change <- abs(fold_change - 1) * 100
+  direction <- if (fold_change > 1) "higher" else "lower"
+  credible <- !(log_ci_lower < 0 && log_ci_upper > 0)
+
+  top_genes <- shrinkage$gene[order(-abs(shrinkage$pooled_estimate))][seq_len(min(3, nrow(shrinkage)))]
+
+  interpretation_verdict <- make_note(
+    check = sprintf("interpretation[%s]", primary_coef),
+    label = "interpretation",
+    statistic = fold_change,
+    p_value = NA_real_,
+    note = sprintf(
+      "Population-level `%s` effect: %.2fx expression on average across genes (95%% credible interval [%.2fx, %.2fx]), i.e. %.1f%% %s. %s Genes with the strongest partially pooled evidence: %s.",
+      primary_coef, fold_change, fold_change_lower, fold_change_upper, pct_change, direction,
+      if (credible) {
+        "The 95% credible interval excludes no change (fold change of 1x), so this population-level effect is well-supported."
+      } else {
+        "The 95% credible interval includes no change (fold change of 1x), so this population-level effect alone isn't well-supported -- individual gene-level estimates in `shrinkage` may still be informative."
+      },
+      paste(as.character(top_genes), collapse = ", ")
+    )
+  )
+
+  verdicts <- rbind(convergence_verdict, dispersion_verdict, ppcheck_verdict, interpretation_verdict)
+  rownames(verdicts) <- NULL
 
   # --- plots -------------------------------------------------------------------
   plots <- list()

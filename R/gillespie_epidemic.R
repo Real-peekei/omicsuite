@@ -46,9 +46,10 @@
 #'     stochastic fadeout.}
 #'   \item{plots}{A named list of `ggplot` objects: `trajectory_plot`,
 #'     `final_size_hist`, `peak_time_hist`.}
-#'   \item{verdicts}{A data.frame summarizing the basic reproduction number
-#'     and the extinction probability, in the same style as
-#'     [fit_coxph_pipeline()].}
+#'   \item{verdicts}{A data.frame with plain-language interpretation rows for
+#'     the basic reproduction number, the stochastic extinction probability,
+#'     and the final-size distribution among sustained outbreaks, in the
+#'     same style as [fit_coxph_pipeline()].}
 #' }
 #'
 #' @examples
@@ -143,9 +144,14 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
   r0 <- params[["beta"]] / params[["gamma"]]
 
   # --- verdicts -----------------------------------------------------------------
-  r0_verdict <- make_verdict(
-    check = "basic_reproduction_number",
-    passed = NA, statistic = r0, p_value = NA_real_,
+  # R0 and the extinction probability both restate what the simulation
+  # implies in plain language -- "interpretation", not "info": they're the
+  # quantities you'd actually put in a results sentence, not incidental
+  # fitted-value notes.
+  r0_verdict <- make_note(
+    check = "interpretation[R0]",
+    label = "interpretation",
+    statistic = r0, p_value = NA_real_,
     note = sprintf(
       "R0 = beta / gamma = %.2f. %s",
       r0,
@@ -156,11 +162,11 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
       }
     )
   )
-  r0_verdict$verdict <- "info"
 
-  extinction_verdict <- make_verdict(
-    check = "stochastic_extinction",
-    passed = NA, statistic = prop_extinct, p_value = NA_real_,
+  extinction_verdict <- make_note(
+    check = "interpretation[extinction_probability]",
+    label = "interpretation",
+    statistic = prop_extinct, p_value = NA_real_,
     note = sprintf(
       "%.1f%% of %d realizations resulted in early stochastic fadeout (fewer than %.0f%% of the population ever infected). %s",
       100 * prop_extinct, n_sim, 100 * extinction_threshold,
@@ -171,9 +177,26 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
       }
     )
   )
-  extinction_verdict$verdict <- "info"
 
-  verdicts <- rbind(r0_verdict, extinction_verdict)
+  sustained_final_size <- final_size[!is_extinct]
+  final_size_verdict <- make_note(
+    check = "interpretation[final_size]",
+    label = "interpretation",
+    statistic = if (length(sustained_final_size) > 0) stats::median(sustained_final_size) else NA_real_,
+    p_value = NA_real_,
+    note = if (length(sustained_final_size) > 0) {
+      sprintf(
+        "Among the %d realization(s) that became a sustained outbreak (not an early fadeout), the median final size was %.0f (%.1f%% of the population of %.0f), with an interquartile range of %.0f to %.0f.",
+        length(sustained_final_size),
+        stats::median(sustained_final_size), 100 * stats::median(sustained_final_size) / n_total, n_total,
+        stats::quantile(sustained_final_size, 0.25), stats::quantile(sustained_final_size, 0.75)
+      )
+    } else {
+      "No realization produced a sustained outbreak (all were classified as early stochastic fadeouts), so there's no final-size distribution to summarize beyond the extinction probability above."
+    }
+  )
+
+  verdicts <- rbind(r0_verdict, extinction_verdict, final_size_verdict)
   rownames(verdicts) <- NULL
 
   # --- plots -------------------------------------------------------------------

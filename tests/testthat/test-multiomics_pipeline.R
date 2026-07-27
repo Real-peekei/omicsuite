@@ -66,6 +66,29 @@ test_that("integrate_multiomics errors informatively when row names are missing"
   expect_error(integrate_multiomics(blocks), "row names")
 })
 
+test_that("group-separation interpretation appears only when group is supplied, and detects a real split", {
+  set.seed(2)
+  n <- 40
+  sample_ids <- paste0("s", seq_len(n))
+  shared <- c(rep(2, n / 2), rep(-2, n / 2))  # strong group-linked signal
+  block1 <- matrix(stats::rnorm(n * 15, sd = 0.3), nrow = n, dimnames = list(sample_ids, paste0("f1_", 1:15)))
+  block2 <- matrix(stats::rnorm(n * 10, sd = 0.3), nrow = n, dimnames = list(sample_ids, paste0("f2_", 1:10)))
+  block1[, 1] <- block1[, 1] + shared
+  block2[, 1] <- block2[, 1] + shared
+  blocks <- list(omics_a = block1, omics_b = block2)
+  group_labels <- stats::setNames(rep(c("groupA", "groupB"), each = n / 2), sample_ids)
+
+  fit_no_group <- integrate_multiomics(blocks, ncomp = 2, n_boot = 5, seed = 1)
+  expect_false(any(grepl("^interpretation\\[group_separation", fit_no_group$verdicts$check)))
+
+  fit_with_group <- integrate_multiomics(blocks, group = group_labels, ncomp = 2, n_boot = 5, seed = 1)
+  sep_rows <- fit_with_group$verdicts[grepl("^interpretation\\[group_separation", fit_with_group$verdicts$check), ]
+  expect_identical(nrow(sep_rows), 2L)
+  expect_true(all(sep_rows$verdict == "interpretation"))
+  # the injected signal is strong and group-aligned, so this should come back significant
+  expect_true(all(sep_rows$p_value < 0.05))
+})
+
 test_that("print.multiomics_pipeline and plot.multiomics_pipeline run without error", {
   blocks <- make_toy_blocks()
   fit <- integrate_multiomics(blocks, ncomp = 2, n_boot = 5, seed = 1)

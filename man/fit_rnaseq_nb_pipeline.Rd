@@ -89,8 +89,9 @@ estimate for comparison.}
 binomial shape parameter.}
 \item{plots}{A named list of \code{ggplot} objects: \code{pp_check},
 \code{shrinkage_plot}, and \code{rhat_plot}.}
-\item{verdicts}{A data.frame summarizing convergence, posterior
-predictive fit, and dispersion, in the same style as
+\item{verdicts}{A data.frame summarizing convergence, dispersion,
+posterior predictive fit, and a plain-language interpretation of the
+population-level \code{condition_var} effect, in the same style as
 \code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}.}
 }
 }

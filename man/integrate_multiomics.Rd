@@ -14,6 +14,7 @@ integrate_multiomics(
   tau = "optimal",
   n_boot = 50,
   boot_top_n = 20,
+  alpha_group_separation = 0.05,
   seed = NULL
 )
 }
@@ -51,6 +52,11 @@ by absolute component-1 loading are tracked for stability (tracking
 every feature in a high-dimensional block would make the bootstrap
 prohibitively slow without adding much information). Default \code{20}.}
 
+\item{alpha_group_separation}{Significance threshold for the
+group-separation interpretation (a Kruskal-Wallis test of each block's
+component 1 by \code{group}), only used when \code{group} is supplied. Default
+\code{0.05}.}
+
 \item{seed}{Optional integer seed.}
 }
 \value{
@@ -67,7 +73,8 @@ sign-agreement rate for the top-loading features on component 1.}
 \item{plots}{A named list of \code{ggplot} objects: \code{block_scores},
 \code{variance_explained}, \code{stability}.}
 \item{verdicts}{A data.frame summarizing sample alignment, variance
-explained, and loading stability, in the same style as
+explained, and loading stability, plus a per-block group-separation
+interpretation when \code{group} is supplied, in the same style as
 \code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}.}
 }
 }

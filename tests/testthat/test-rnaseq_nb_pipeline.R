@@ -42,8 +42,20 @@ test_that("fit_rnaseq_nb_pipeline returns the expected structure", {
   expect_true(is.data.frame(fit$verdicts))
   expect_true(all(c("mcmc_convergence", "dispersion[shape]", "posterior_predictive_check") %in%
     fit$verdicts$check))
+  expect_true(any(grepl("^interpretation\\[condition", fit$verdicts$check)))
   expect_true("shrinkage_plot" %in% names(fit$plots))
   expect_true("rhat_plot" %in% names(fit$plots))
+})
+
+test_that("the interpretation verdict reports a real fold-change and names top genes", {
+  fit <- make_toy_rnaseq_fit()
+  interp_row <- fit$verdicts[grepl("^interpretation\\[condition", fit$verdicts$check), ]
+  expect_identical(nrow(interp_row), 1L)
+  expect_identical(interp_row$verdict, "interpretation")
+  expect_false(is.na(interp_row$statistic))
+  expect_true(interp_row$statistic > 0)  # fold-change is always positive
+  expect_true(grepl("expression on average across genes", interp_row$note))
+  expect_true(grepl("Genes with the strongest partially pooled evidence:", interp_row$note))
 })
 
 test_that("fit_rnaseq_nb_pipeline errors clearly when brms is unavailable", {

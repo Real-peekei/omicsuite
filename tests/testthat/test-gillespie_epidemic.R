@@ -13,7 +13,8 @@ test_that("simulate_gillespie_epidemic (SIR) returns the expected structure", {
   expect_true(all(c("S", "I", "R") %in% names(fit$summary)))
   expect_equal(fit$r0, 5)
   expect_true(is.data.frame(fit$verdicts))
-  expect_true(all(c("basic_reproduction_number", "stochastic_extinction") %in% fit$verdicts$check))
+  expect_true(all(c("interpretation[R0]", "interpretation[extinction_probability]", "interpretation[final_size]") %in% fit$verdicts$check))
+  expect_true(all(fit$verdicts$verdict == "interpretation"))
   expect_true(all(c("trajectory_plot", "final_size_hist", "peak_time_hist") %in% names(fit$plots)))
 })
 
@@ -73,6 +74,30 @@ test_that("simulate_gillespie_epidemic errors informatively on missing state/par
     ),
     "params is missing"
   )
+})
+
+test_that("interpretation[final_size] reports a real summary when outbreaks occur, and a clear fallback when none do", {
+  fit_outbreak <- simulate_gillespie_epidemic(
+    model = "SIR",
+    initial_state = c(S = 199, I = 1, R = 0),
+    params = list(beta = 0.5, gamma = 0.1),
+    t_max = 60, n_sim = 20, seed = 6
+  )
+  final_size_row <- fit_outbreak$verdicts[fit_outbreak$verdicts$check == "interpretation[final_size]", ]
+  expect_true(grepl("median final size was", final_size_row$note))
+  expect_false(is.na(final_size_row$statistic))
+
+  fit_no_outbreak <- simulate_gillespie_epidemic(
+    model = "SIR",
+    initial_state = c(S = 199, I = 1, R = 0),
+    params = list(beta = 0.02, gamma = 0.5),
+    t_max = 30, n_sim = 20, seed = 7
+  )
+  final_size_row_none <- fit_no_outbreak$verdicts[fit_no_outbreak$verdicts$check == "interpretation[final_size]", ]
+  if (fit_no_outbreak$prop_extinct == 1) {
+    expect_true(grepl("No realization produced a sustained outbreak", final_size_row_none$note))
+    expect_true(is.na(final_size_row_none$statistic))
+  }
 })
 
 test_that("print.gillespie_epidemic and plot.gillespie_epidemic run without error", {

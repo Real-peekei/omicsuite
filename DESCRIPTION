@@ -1,6 +1,6 @@
 Package: omicsuite
 Title: Analytical Pipelines for Biostatistics, Bioinformatics, and Computational Biology
-Version: 0.4.1
+Version: 0.4.2
 Authors@R: person("Peekei", role = c("aut", "cre"), email = "you@example.com")
 Description: An extensible collection of high-level analytical pipelines for
     biostatistics, bioinformatics, and computational biology. Every pipeline

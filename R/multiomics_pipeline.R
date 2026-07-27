@@ -40,6 +40,10 @@
 #'   by absolute component-1 loading are tracked for stability (tracking
 #'   every feature in a high-dimensional block would make the bootstrap
 #'   prohibitively slow without adding much information). Default `20`.
+#' @param alpha_group_separation Significance threshold for the
+#'   group-separation interpretation (a Kruskal-Wallis test of each block's
+#'   component 1 by `group`), only used when `group` is supplied. Default
+#'   `0.05`.
 #' @param seed Optional integer seed.
 #'
 #' @return An object of class `"multiomics_pipeline"`, a list with elements:
@@ -55,7 +59,8 @@
 #'   \item{plots}{A named list of `ggplot` objects: `block_scores`,
 #'     `variance_explained`, `stability`.}
 #'   \item{verdicts}{A data.frame summarizing sample alignment, variance
-#'     explained, and loading stability, in the same style as
+#'     explained, and loading stability, plus a per-block group-separation
+#'     interpretation when `group` is supplied, in the same style as
 #'     [fit_coxph_pipeline()].}
 #' }
 #'
@@ -86,6 +91,7 @@ integrate_multiomics <- function(blocks,
                                   tau = "optimal",
                                   n_boot = 50,
                                   boot_top_n = 20,
+                                  alpha_group_separation = 0.05,
                                   seed = NULL) {
 
   scheme <- match.arg(scheme)
@@ -281,6 +287,44 @@ integrate_multiomics <- function(blocks,
   }))
 
   verdicts <- rbind(alignment_verdict, ave_verdicts, stability_verdicts)
+
+  # --- effect interpretation (does the shared component separate the groups?) ---
+  # Only produced when `group` was supplied. Kruskal-Wallis on each block's
+  # component 1 score is a plain, distribution-free way to ask "do these
+  # groups actually differ on the shared component" -- deliberately not a
+  # claim about which biological process drives the separation, just whether
+  # the fitted component and the supplied labels line up statistically.
+  if (!is.null(group_df)) {
+    separation_verdicts <- do.call(rbind, lapply(names(scores), function(bname) {
+      block_scores <- scores[[bname]]
+      if (length(unique(stats::na.omit(block_scores$group))) < 2) {
+        return(make_note(
+          check = sprintf("interpretation[group_separation_%s]", bname),
+          label = "interpretation",
+          statistic = NA_real_, p_value = NA_real_,
+          note = "Fewer than two distinct group labels are present among this block's samples, so group separation on component 1 can't be tested."
+        ))
+      }
+      test_result <- stats::kruskal.test(comp1 ~ group, data = block_scores)
+      is_separated <- test_result$p.value < alpha_group_separation
+      make_note(
+        check = sprintf("interpretation[group_separation_%s]", bname),
+        label = "interpretation",
+        statistic = unname(test_result$statistic), p_value = test_result$p.value,
+        note = sprintf(
+          "Kruskal-Wallis test of component 1 by group: H = %.2f, p = %.4f. %s",
+          unname(test_result$statistic), test_result$p.value,
+          if (is_separated) {
+            sprintf("The supplied groups differ significantly on this block's shared component (p < %.2f) -- the integration is picking up something that lines up with the group labels.", alpha_group_separation)
+          } else {
+            sprintf("No significant difference between groups on this block's shared component at alpha = %.2f -- component 1 here isn't distinguishing the supplied groups, whatever else it's capturing.", alpha_group_separation)
+          }
+        )
+      )
+    }))
+    verdicts <- rbind(verdicts, separation_verdicts)
+  }
+
   rownames(verdicts) <- NULL
 
   # --- plots -------------------------------------------------------------------

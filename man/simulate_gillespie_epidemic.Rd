@@ -61,9 +61,10 @@ peak infectious count.}
 stochastic fadeout.}
 \item{plots}{A named list of \code{ggplot} objects: \code{trajectory_plot},
 \code{final_size_hist}, \code{peak_time_hist}.}
-\item{verdicts}{A data.frame summarizing the basic reproduction number
-and the extinction probability, in the same style as
-\code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}.}
+\item{verdicts}{A data.frame with plain-language interpretation rows for
+the basic reproduction number, the stochastic extinction probability,
+and the final-size distribution among sustained outbreaks, in the
+same style as \code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}.}
 }
 }
 \description{
