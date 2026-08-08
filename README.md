@@ -9,11 +9,14 @@ would include, render `ggplot2` plots, and return a structured verdict
 table -- assumption checks, informational notes, and a plain-language
 interpretation of the fitted effect -- rather than a bare point estimate.
 
-**Status:** v0.4.1 ships four modules (survival, RNA-seq, epidemic,
-multi-omics), a documentation site, and hazard-ratio interpretation verdicts
-in the survival module (template for the other three). See `NEWS.md` and
-the [package website](https://real-peekei.github.io/omicsuite/) for
-details.
+**Status:** v0.5.0 ships five modules (survival Cox PH, survival
+Kaplan-Meier, RNA-seq, epidemic, multi-omics), each with plain-language
+interpretation verdicts, plus a documentation site. See `NEWS.md` for
+what's shipped and [`ROADMAP.md`](ROADMAP.md) for what's next -- omicsuite
+is meant to grow past these; see [`CONTRIBUTING.md`](CONTRIBUTING.md) for
+the shared pipeline contract new modules follow. The
+[package website](https://real-peekei.github.io/omicsuite/) has the full
+reference and vignettes.
 
 ## Installation
 
@@ -70,6 +73,33 @@ All of the above are also summarized in `fit$verdicts`, a data.frame with one
 row per check, a pass/flagged/review status, the relevant statistic, and a
 plain-language note -- written to be pasted directly into an article or
 report.
+
+## Kaplan-Meier: quick example
+
+```r
+library(omicsuite)
+
+set.seed(1)
+n <- 200
+dat <- data.frame(
+  time  = rexp(n, rate = 0.05),
+  event = rbinom(n, 1, 0.7),
+  arm   = factor(sample(c("control", "treatment"), n, replace = TRUE))
+)
+
+fit <- fit_km_pipeline(dat, "time", "event", strata_var = "arm")
+fit$verdicts
+plot(fit, which = "km_plot")
+```
+
+## What `fit_km_pipeline()` checks
+
+| Check | Method | Where to look |
+|---|---|---|
+| Median survival per stratum | `summary(survfit)$table`, explicit "not reached" handling | `fit$median_survival`, `fit$verdicts` |
+| Group difference | Log-rank test | `fit$logrank_test`, `fit$verdicts` |
+| Censoring | Proportion censored vs. observed | `fit$verdicts` (`censoring_summary`) |
+| Parametric fit (optional) | AIC + visual overlay against the KM curve | `fit$parametric_fit`, `fit$plots$parametric_overlay` |
 
 ## Development notes
 

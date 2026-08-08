@@ -62,15 +62,27 @@ checks.
 
 ## Dependency policy
 
-- If the fitting method needs a compiler toolchain (Stan, C++, etc.) or is
-  otherwise heavy to install, it goes in `Suggests`, and the function
-  guards on availability at call time (see `brms_is_available()` in
-  `R/utils.R` for the pattern -- note the wrapper-function trick needed to
-  make it mockable in tests).
-- If it's an ordinary CRAN package with no special install requirements
-  (like `survival` or `RGCCA`), it can be a hard `Imports`.
+- **The core four's dependencies** (`survival`, `ggplot2`, `stats`, `rlang`,
+  `RGCCA`) stay hard `Imports` -- they're either foundational (used by
+  multiple modules) or were added when the package was small enough that
+  hard-importing an ordinary CRAN package was harmless.
+- **Every module beyond those four goes in `Suggests`, regardless of
+  toolchain weight.** This changed from the original policy (which allowed
+  hard `Imports` for any toolchain-free CRAN package): with dozens of
+  planned modules (see `ROADMAP.md`), hard-importing each one's specific
+  packages would eventually force everyone to install the entire roadmap
+  just to use `fit_coxph_pipeline()`. `survminer` and `flexsurv` are pure R
+  with no compiler toolchain, and they're still `Suggests` -- the rule is
+  about keeping the base install lean as the module count scales, not about
+  toolchain difficulty specifically.
+- The function guards on availability at call time via a small internal
+  `<pkg>_is_available()` wrapper around `requireNamespace()` (see
+  `brms_is_available()` in `R/utils.R` for the pattern -- note the
+  wrapper-function trick needed to make it mockable in tests). If a module
+  needs more than one optional package, guard on each independently so a
+  partial install still gets as far as possible before erroring.
 - Either way: the survival module must keep working for someone who installs
-  omicsuite without any of the heavier optional dependencies.
+  omicsuite without any of the heavier or module-specific dependencies.
 
 ## Testing
 

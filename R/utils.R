@@ -117,3 +117,29 @@ make_note <- function(check, label, statistic = NA_real_, p_value = NA_real_, no
 brms_is_available <- function() {
   requireNamespace("brms", quietly = TRUE)
 }
+
+#' Check whether the survminer package is installed
+#'
+#' Small internal wrapper around `requireNamespace()`, following the same
+#' pattern as `brms_is_available()` (see its docs for why this indirection
+#' exists instead of calling `requireNamespace()` directly).
+#'
+#' @return Logical.
+#' @keywords internal
+#' @noRd
+survminer_is_available <- function() {
+  requireNamespace("survminer", quietly = TRUE)
+}
+
+#' Check whether the flexsurv package is installed
+#'
+#' Small internal wrapper around `requireNamespace()`, following the same
+#' pattern as `brms_is_available()` (see its docs for why this indirection
+#' exists instead of calling `requireNamespace()` directly).
+#'
+#' @return Logical.
+#' @keywords internal
+#' @noRd
+flexsurv_is_available <- function() {
+  requireNamespace("flexsurv", quietly = TRUE)
+}

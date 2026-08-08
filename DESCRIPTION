@@ -1,6 +1,6 @@
 Package: omicsuite
 Title: Analytical Pipelines for Biostatistics, Bioinformatics, and Computational Biology
-Version: 0.4.2
+Version: 0.5.0
 Authors@R: person("Peekei", role = c("aut", "cre"), email = "you@example.com")
 Description: An extensible collection of high-level analytical pipelines for
     biostatistics, bioinformatics, and computational biology. Every pipeline
@@ -24,8 +24,11 @@ Description: An extensible collection of high-level analytical pipelines for
     includes multi-omics data integration via regularized generalized
     canonical correlation analysis, with per-block variance explained, a
     bootstrap-based loading stability check, and sample-score visualization
-    across blocks. New pipelines are added following the same contract; see
-    the package website for the current module list.
+    across blocks. Also includes Kaplan-Meier survival curve estimation with
+    a log-rank test, median survival with confidence intervals per stratum,
+    and an optional parametric overlay for distributional comparison. New
+    pipelines are added following the same contract; see the package
+    website for the current module list.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
@@ -36,6 +39,7 @@ Imports:
     survival,
     ggplot2,
     stats,
+    tools,
     rlang,
     RGCCA
 Suggests:
@@ -43,6 +47,8 @@ Suggests:
     knitr,
     rmarkdown,
     brms (>= 2.20.0),
+    survminer,
+    flexsurv,
     pkgdown
 VignetteBuilder: knitr
 Config/testthat/edition: 3

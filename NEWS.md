@@ -1,3 +1,28 @@
+# omicsuite 0.5.0
+
+* New: `fit_km_pipeline()`, the fifth module -- Kaplan-Meier survival curve
+  estimation, the descriptive complement to `fit_coxph_pipeline()`:
+  - nonparametric survival curves, optionally stratified, with a log-rank
+    test for group differences
+  - median survival time with confidence interval per stratum, explicitly
+    reporting "not reached" rather than a bare `NA` under heavy censoring
+  - an optional parametric overlay (Weibull, exponential, etc. via
+    `flexsurv`) with an AIC comparison and a visual-review verdict
+  - a `survminer`-based KM plot with a risk table when `survminer` is
+    installed, falling back to a plain `ggplot2` step-function plot
+    (no risk table, linear rather than stair-stepped confidence bands)
+    when it isn't
+  - `print()`, `summary()`, and `plot()` S3 methods
+* Changed dependency policy (see `CONTRIBUTING.md`): every module beyond the
+  original four now goes in `Suggests` regardless of toolchain weight, not
+  just Stan-style heavy dependencies. `survminer` and `flexsurv` are pure R
+  with no compiler toolchain, and they're still `Suggests` -- with dozens of
+  modules planned (`ROADMAP.md`), hard-`Imports`-ing each one's specific
+  packages doesn't scale.
+* Added `ROADMAP.md`, cataloging every pipeline/package from the user's
+  biostatistics/bioinformatics/computational-biology reference list against
+  the pipeline contract, with a status per entry.
+
 # omicsuite 0.4.2
 
 * Replicated the `"interpretation"` verdict pattern (introduced in the

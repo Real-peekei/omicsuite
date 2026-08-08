@@ -1,0 +1,93 @@
+---
+title: "Getting Started: Kaplan-Meier Pipeline"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started: Kaplan-Meier Pipeline}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4
+)
+```
+
+```{r setup}
+library(omicsuite)
+```
+
+## Kaplan-Meier vs. Cox: different questions
+
+[`fit_coxph_pipeline()`](getting-started.html) models *how* covariates
+change the hazard. `fit_km_pipeline()` answers a simpler, more descriptive
+question first: what does survival actually look like in this sample, with
+no modeling assumptions at all beyond independent censoring? In practice
+you'd usually run this before, not instead of, the Cox pipeline -- it's the
+plot that goes in a results section before the hazard ratios do.
+
+## A simulated example
+
+```{r}
+set.seed(1)
+n <- 200
+dat <- data.frame(
+  time  = rexp(n, rate = 0.05),
+  event = rbinom(n, 1, 0.7),
+  arm   = factor(sample(c("control", "treatment"), n, replace = TRUE))
+)
+
+fit <- fit_km_pipeline(dat, "time", "event", strata_var = "arm")
+fit
+```
+
+## Reading the verdict table
+
+```{r}
+fit$verdicts
+```
+
+`interpretation[median_survival_<stratum>]` restates the median survival
+time and its CI in plain language -- including the not-reached case
+explicitly, rather than silently printing `NA`. `interpretation[log_rank_test]`
+is the global test of whether the strata differ; `censoring_summary` is
+worth checking before trusting either: heavy censoring is exactly when
+"median not reached" starts showing up and when the log-rank test loses
+power.
+
+## The KM plot
+
+```{r, fig.alt = "Kaplan-Meier survival curves by treatment arm"}
+plot(fit, which = "km_plot")
+```
+
+If you have [`survminer`](https://cran.r-project.org/package=survminer)
+installed, this includes a risk table underneath; without it, `omicsuite`
+falls back to a plain `ggplot2` step-function plot so the pipeline still
+works, just without the risk table and with a simpler (linearly
+interpolated rather than stair-stepped) confidence ribbon.
+
+## Optional: a parametric overlay
+
+Sometimes you want to know whether a parametric family (Weibull,
+exponential, ...) is a reasonable summary of the same data -- useful if
+you're about to extrapolate beyond the observed follow-up period, which a
+KM curve alone can't do.
+
+```{r, fig.alt = "KM curve with a Weibull parametric overlay"}
+fit_param <- fit_km_pipeline(dat, "time", "event", parametric_dist = "weibull")
+plot(fit_param, which = "parametric_overlay")
+```
+
+```{r}
+fit_param$verdicts[grepl("^parametric", fit_param$verdicts$check), ]
+```
+
+The AIC row is informational -- useful for comparing candidate
+distributions against each other -- but the overlay plot is what actually
+tells you whether the fit is any good; a low AIC among bad options is still
+a bad fit, which is why that row is marked `"review"` rather than
+auto-scored.

@@ -24,6 +24,8 @@ navbar:
       menu:
       - text: "Survival: Cox PH pipeline"
         href: articles/getting-started.html
+      - text: "Survival: Kaplan-Meier pipeline"
+        href: articles/km-pipeline.html
       - text: "RNA-seq: Bayesian NB mixed model"
         href: articles/rnaseq-nb-pipeline.html
       - text: "Epidemic: Gillespie SIR/SEIR"
@@ -33,12 +35,16 @@ navbar:
 
 reference:
 - title: Survival
-  desc: Cox proportional hazards pipeline with a full diagnostic suite
+  desc: Cox proportional hazards and Kaplan-Meier pipelines
   contents:
   - fit_coxph_pipeline
   - print.coxph_pipeline
   - summary.coxph_pipeline
   - plot.coxph_pipeline
+  - fit_km_pipeline
+  - print.km_pipeline
+  - summary.km_pipeline
+  - plot.km_pipeline
 
 - title: RNA-seq
   desc: Bayesian hierarchical negative binomial mixed model for longitudinal counts
