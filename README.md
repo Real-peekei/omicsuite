@@ -8,13 +8,16 @@ contract: fit a model, run the diagnostic checks a careful methods section
 would include, render `ggplot2` plots, and return a structured verdict
 table -- assumption checks, informational notes, and a plain-language
 interpretation of the fitted effect -- rather than a bare point estimate.
+Every plot also carries its matching verdict note as a caption, so a
+figure alone carries its own interpretation, not just the verdicts table.
 
-**Status:** v0.5.0 ships five modules (survival Cox PH, survival
-Kaplan-Meier, RNA-seq, epidemic, multi-omics), each with plain-language
-interpretation verdicts, plus a documentation site. See `NEWS.md` for
-what's shipped and [`ROADMAP.md`](ROADMAP.md) for what's next -- omicsuite
-is meant to grow past these; see [`CONTRIBUTING.md`](CONTRIBUTING.md) for
-the shared pipeline contract new modules follow. The
+**Status:** v0.7.0 ships six modules (survival Cox PH, survival
+Kaplan-Meier, survival competing risks, RNA-seq, epidemic, multi-omics),
+each with plain-language interpretation verdicts and captioned plots, plus
+a documentation site. See `NEWS.md` for what's shipped and
+[`ROADMAP.md`](ROADMAP.md) for what's next -- omicsuite is meant to grow
+past these; see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the shared
+pipeline contract new modules follow. The
 [package website](https://real-peekei.github.io/omicsuite/) has the full
 reference and vignettes.
 
@@ -100,6 +103,36 @@ plot(fit, which = "km_plot")
 | Group difference | Log-rank test | `fit$logrank_test`, `fit$verdicts` |
 | Censoring | Proportion censored vs. observed | `fit$verdicts` (`censoring_summary`) |
 | Parametric fit (optional) | AIC + visual overlay against the KM curve | `fit$parametric_fit`, `fit$plots$parametric_overlay` |
+
+## Competing risks: quick example
+
+```r
+library(omicsuite)
+
+set.seed(1)
+n <- 300
+dat <- data.frame(
+  time  = rexp(n, rate = 0.1),
+  # 0 = censored, 1 = event of interest, 2 = competing event
+  event = sample(c(0, 1, 2), n, replace = TRUE, prob = c(0.3, 0.5, 0.2)),
+  arm   = factor(sample(c("control", "treatment"), n, replace = TRUE))
+)
+
+fit <- fit_competing_risks_pipeline(
+  dat, "time", "event", group_var = "arm", covariates = "arm"
+)
+fit$verdicts
+plot(fit, which = "cif_plot")
+```
+
+## What `fit_competing_risks_pipeline()` checks
+
+| Check | Method | Where to look |
+|---|---|---|
+| Event-type breakdown | Counts/proportions per event code | `fit$event_summary`, `fit$verdicts` |
+| Group difference in CIF | Gray's test, per event type | `fit$cuminc_fit`, `fit$verdicts` |
+| Subdistribution effect | Fine-Gray model (`cmprsk::crr()`) | `fit$crr_fit`, `fit$verdicts` |
+| Cause-specific vs. subdistribution | Standing interpretive note | `fit$verdicts` (`subdistribution_vs_cause_specific`) |
 
 ## Development notes
 

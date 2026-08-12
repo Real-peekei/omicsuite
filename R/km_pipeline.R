@@ -48,7 +48,8 @@
 #'   \item{plots}{A named list of `ggplot`-family objects: `km_plot`
 #'     (a `ggsurvplot` object if `survminer` is installed, otherwise a plain
 #'     `ggplot`), and `parametric_overlay` if `parametric_dist` was supplied
-#'     and the overlay could be built (see Details).}
+#'     and the overlay could be built (see Details). Each carries its
+#'     matching verdict note(s) as a wrapped plot caption.}
 #'   \item{verdicts}{A data.frame: median survival per stratum and the
 #'     log-rank test as `"interpretation"` rows, censoring summary and
 #'     parametric-fit AIC as `"info"` rows, and the parametric overlay as a
@@ -249,6 +250,16 @@ fit_km_pipeline <- function(data,
       theme_omicsuite()
   }
 
+  km_caption_notes <- verdicts$note[
+    grepl("^interpretation\\[median_survival_", verdicts$check) |
+      verdicts$check %in% c("interpretation[log_rank_test]", "censoring_summary")
+  ]
+  if (inherits(plots$km_plot, "ggsurvplot")) {
+    plots$km_plot$plot <- add_caption(plots$km_plot$plot, km_caption_notes)
+  } else {
+    plots$km_plot <- add_caption(plots$km_plot, km_caption_notes)
+  }
+
   if (!is.null(parametric_fit)) {
     # Root cause, confirmed by inspecting str(summary(flexsurv_fit, ...))
     # directly: summary.flexsurvreg(..., ci = FALSE) returns an *unnamed*
@@ -306,7 +317,7 @@ fit_km_pipeline <- function(data,
       }
       km_df <- data.frame(time = fit$time, surv = fit$surv, stratum = strata_labels)
 
-      ggplot2::ggplot() +
+      overlay_ggplot <- ggplot2::ggplot() +
         ggplot2::geom_step(
           data = km_df,
           ggplot2::aes(x = .data$time, y = .data$surv, color = .data$stratum),
@@ -322,6 +333,10 @@ fit_km_pipeline <- function(data,
           x = "Time", y = "Survival probability", color = strata_var
         ) +
         theme_omicsuite()
+      add_caption(overlay_ggplot, verdicts$note[verdicts$check %in% c(
+        sprintf("parametric_fit[%s]", parametric_dist),
+        sprintf("parametric_overlay[%s]", parametric_dist)
+      )])
     }, error = function(e) {
       parametric_overlay_error <<- conditionMessage(e)
       NULL

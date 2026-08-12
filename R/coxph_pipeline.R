@@ -46,7 +46,8 @@
 #'   \item{functional_form}{A named list of data.frames (martingale residual
 #'     vs. covariate value) for each continuous covariate in `covariates`.}
 #'   \item{plots}{A named list of `ggplot` objects: `ph_plot`, `influence_plot`,
-#'     and one `functional_form_<var>` entry per continuous covariate.}
+#'     and one `functional_form_<var>` entry per continuous covariate. Each
+#'     carries its matching verdict note as a wrapped plot caption.}
 #'   \item{verdicts}{A data.frame summarizing every diagnostic check
 #'     (`"pass"`/`"flagged"`), each functional-form check (`"review"`), and a
 #'     plain-language hazard-ratio interpretation for every model term
@@ -301,6 +302,10 @@ fit_coxph_pipeline <- function(data,
       x = NULL, y = expression(-log[10](p))
     ) +
     theme_omicsuite()
+  plots$ph_plot <- add_caption(
+    plots$ph_plot,
+    verdicts$note[grepl("^proportional_hazards\\[", verdicts$check)]
+  )
 
   influence_df <- data.frame(
     index = used_rows,
@@ -319,6 +324,10 @@ fit_coxph_pipeline <- function(data,
       x = "Observation index", y = "max |dfbetas|", color = "Flagged"
     ) +
     theme_omicsuite()
+  plots$influence_plot <- add_caption(
+    plots$influence_plot,
+    verdicts$note[verdicts$check == "influence[dfbetas]"]
+  )
 
   for (v in names(functional_form)) {
     plots[[sprintf("functional_form_%s", v)]] <- ggplot2::ggplot(
@@ -334,6 +343,10 @@ fit_coxph_pipeline <- function(data,
         x = v, y = "Martingale residual"
       ) +
       theme_omicsuite()
+    plots[[sprintf("functional_form_%s", v)]] <- add_caption(
+      plots[[sprintf("functional_form_%s", v)]],
+      verdicts$note[verdicts$check == sprintf("functional_form[%s]", v)]
+    )
   }
 
   structure(

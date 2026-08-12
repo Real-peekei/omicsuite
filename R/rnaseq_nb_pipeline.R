@@ -66,7 +66,8 @@
 #'   \item{dispersion}{A list with the posterior summary of the negative
 #'     binomial shape parameter.}
 #'   \item{plots}{A named list of `ggplot` objects: `pp_check`,
-#'     `shrinkage_plot`, and `rhat_plot`.}
+#'     `shrinkage_plot`, and `rhat_plot`. Each carries its matching verdict
+#'     note as a wrapped plot caption.}
 #'   \item{verdicts}{A data.frame summarizing convergence, dispersion,
 #'     posterior predictive fit, and a plain-language interpretation of the
 #'     population-level `condition_var` effect, in the same style as
@@ -296,6 +297,12 @@ fit_rnaseq_nb_pipeline <- function(data,
       theme_omicsuite(),
     error = function(e) NULL
   )
+  if (!is.null(plots$pp_check)) {
+    plots$pp_check <- add_caption(
+      plots$pp_check,
+      verdicts$note[verdicts$check == "posterior_predictive_check"]
+    )
+  }
 
   plots$shrinkage_plot <- ggplot2::ggplot(
     shrinkage,
@@ -316,6 +323,10 @@ fit_rnaseq_nb_pipeline <- function(data,
       x = "Effect estimate (log scale)", y = NULL
     ) +
     theme_omicsuite()
+  plots$shrinkage_plot <- add_caption(
+    plots$shrinkage_plot,
+    verdicts$note[verdicts$check == sprintf("interpretation[%s]", primary_coef)]
+  )
 
   rhat_df <- data.frame(parameter = names(rhat_vec), rhat = as.numeric(rhat_vec))
   plots$rhat_plot <- ggplot2::ggplot(rhat_df, ggplot2::aes(x = .data$rhat)) +
@@ -327,6 +338,10 @@ fit_rnaseq_nb_pipeline <- function(data,
       x = "Rhat", y = "Count of parameters"
     ) +
     theme_omicsuite()
+  plots$rhat_plot <- add_caption(
+    plots$rhat_plot,
+    verdicts$note[verdicts$check == "mcmc_convergence"]
+  )
 
   structure(
     list(

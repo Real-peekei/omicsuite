@@ -21,7 +21,7 @@ that's carried over here rather than re-litigated.
 |---|---|---|---|
 | Survival analysis: Cox PH | `survival` | **built** | `fit_coxph_pipeline()`, v0.1.0 |
 | Survival analysis: Kaplan-Meier | `survival`, `survminer`, `flexsurv` | **built** | `fit_km_pipeline()`, v0.5.0 |
-| Survival analysis: competing risks | `cmprsk` | planned | Next up -- cumulative incidence + Fine-Gray, same "Survival analysis" row as Cox/KM |
+| Survival analysis: competing risks | `cmprsk` | **built** | `fit_competing_risks_pipeline()`, v0.6.0 -- completes the "Survival analysis" row |
 | RNA-seq DE (Bayesian mixed model) | `brms` | **built** | `fit_rnaseq_nb_pipeline()`, v0.2.0 |
 | Epidemic simulation | base R | **built** | `simulate_gillespie_epidemic()`, v0.3.0 |
 | Multi-omics integration | `RGCCA` | **built** | `integrate_multiomics()`, v0.4.0 |

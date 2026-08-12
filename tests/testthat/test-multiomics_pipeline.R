@@ -89,6 +89,19 @@ test_that("group-separation interpretation appears only when group is supplied, 
   expect_true(all(sep_rows$p_value < 0.05))
 })
 
+test_that("variance_explained and stability plots carry non-empty captions from their matching verdicts", {
+  blocks <- make_toy_blocks()
+  fit <- integrate_multiomics(blocks, ncomp = 2, n_boot = 5, seed = 1)
+
+  ve_caption <- fit$plots$variance_explained$labels$caption
+  expect_false(is.null(ve_caption))
+  expect_true(grepl("variance", ve_caption))
+
+  stability_caption <- fit$plots$stability$labels$caption
+  expect_false(is.null(stability_caption))
+  expect_true(grepl("sign-agreement rate", stability_caption))
+})
+
 test_that("print.multiomics_pipeline and plot.multiomics_pipeline run without error", {
   blocks <- make_toy_blocks()
   fit <- integrate_multiomics(blocks, ncomp = 2, n_boot = 5, seed = 1)

@@ -8,8 +8,39 @@ theme_omicsuite <- function() {
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
       plot.title = ggplot2::element_text(face = "bold"),
+      plot.caption = ggplot2::element_text(
+        hjust = 0, face = "italic", size = ggplot2::rel(0.75), lineheight = 1.15
+      ),
+      plot.caption.position = "plot",
       legend.position = "bottom"
     )
+}
+
+#' Attach interpretive text to a plot as a wrapped caption
+#'
+#' Pulls together one or more verdict `note` strings (from a `verdicts`
+#' data.frame's `note` column, typically) and attaches them to a ggplot
+#' object as a left-aligned, word-wrapped caption -- so the plot carries
+#' its own interpretation, not just the `verdicts` table. Multiple notes
+#' are separated by a blank line.
+#'
+#' @param plot A ggplot object.
+#' @param notes Character vector of note text. Empty or `NA` entries are
+#'   dropped; if nothing is left, `plot` is returned unchanged.
+#' @param width Integer. Wrap width in characters. Default `100`.
+#' @return `plot`, with a caption added via `+` if `notes` had content.
+#' @keywords internal
+#' @noRd
+add_caption <- function(plot, notes, width = 100) {
+  notes <- notes[!is.na(notes) & nzchar(notes)]
+  if (length(notes) == 0) {
+    return(plot)
+  }
+  caption_text <- paste(
+    vapply(notes, function(n) paste(strwrap(n, width = width), collapse = "\n"), character(1)),
+    collapse = "\n\n"
+  )
+  plot + ggplot2::labs(caption = caption_text)
 }
 
 #' Build a single verdict record
@@ -142,4 +173,17 @@ survminer_is_available <- function() {
 #' @noRd
 flexsurv_is_available <- function() {
   requireNamespace("flexsurv", quietly = TRUE)
+}
+
+#' Check whether the cmprsk package is installed
+#'
+#' Small internal wrapper around `requireNamespace()`, following the same
+#' pattern as `brms_is_available()` (see its docs for why this indirection
+#' exists instead of calling `requireNamespace()` directly).
+#'
+#' @return Logical.
+#' @keywords internal
+#' @noRd
+cmprsk_is_available <- function() {
+  requireNamespace("cmprsk", quietly = TRUE)
 }

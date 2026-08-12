@@ -84,6 +84,18 @@ test_that("fit_rnaseq_nb_pipeline errors informatively on missing columns", {
   )
 })
 
+test_that("shrinkage_plot and rhat_plot carry non-empty captions from their matching verdicts", {
+  fit <- make_toy_rnaseq_fit()
+
+  shrinkage_caption <- fit$plots$shrinkage_plot$labels$caption
+  expect_false(is.null(shrinkage_caption))
+  expect_true(grepl("expression on average across genes", shrinkage_caption))
+
+  rhat_caption <- fit$plots$rhat_plot$labels$caption
+  expect_false(is.null(rhat_caption))
+  expect_true(grepl("Rhat", rhat_caption))
+})
+
 test_that("print.rnaseq_nb_pipeline and plot.rnaseq_nb_pipeline run without error", {
   fit <- make_toy_rnaseq_fit()
   expect_output(suppressWarnings(print(fit)), "omicsuite RNA-seq")

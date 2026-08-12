@@ -1,0 +1,86 @@
+---
+title: "Getting Started: Competing Risks Pipeline"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Getting Started: Competing Risks Pipeline}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 6,
+  fig.height = 4,
+  eval = requireNamespace("cmprsk", quietly = TRUE)
+)
+```
+
+```{r setup}
+library(omicsuite)
+```
+
+## Why not just treat competing events as censoring?
+
+Suppose the event of interest is relapse, but some patients die from an
+unrelated cause first. Treating that death as ordinary censoring in a
+standard KM or Cox analysis implicitly assumes those patients would have
+gone on to relapse eventually, had they lived -- an assumption you can
+never check and usually don't believe. `fit_competing_risks_pipeline()`
+instead estimates the cumulative incidence directly, keeping those
+subjects in the risk set on the correct (subdistribution) timescale.
+
+**The event coding is different here.** `fit_km_pipeline()` and
+`fit_coxph_pipeline()` want a binary 0/1 event indicator. This function
+wants `event_var` to encode *which* event happened: `0` = censored, `1` =
+the event of interest, `2` = a competing event, and so on.
+
+## A simulated example
+
+```{r}
+set.seed(1)
+n <- 300
+dat <- data.frame(
+  time  = rexp(n, rate = 0.1),
+  event = sample(c(0, 1, 2), n, replace = TRUE, prob = c(0.3, 0.5, 0.2)),
+  arm   = factor(sample(c("control", "treatment"), n, replace = TRUE))
+)
+
+fit <- fit_competing_risks_pipeline(
+  dat, "time", "event",
+  group_var  = "arm",
+  covariates = "arm"
+)
+fit
+```
+
+## Reading the verdict table
+
+```{r}
+fit$verdicts
+```
+
+`event_type_breakdown` is worth checking first -- how many subjects landed
+in each event code, including censoring. `subdistribution_vs_cause_specific`
+is a standing reminder, not a data-dependent result: the Fine-Gray model
+here answers a different question than a cause-specific Cox model would,
+and the two can point in different directions for the same covariate.
+`interpretation[gray_test_event_<code>]` is the group-comparison test per
+event type; `interpretation[subdistribution_hr_<term>]` is the Fine-Gray
+model's subdistribution hazard ratio, phrased the same way as
+`fit_coxph_pipeline()`'s hazard ratios but explicitly labeled as a
+*subdistribution* HR so the two don't get conflated in a write-up.
+
+## The cumulative incidence plot
+
+```{r, fig.alt = "Cumulative incidence curves by event type and treatment arm"}
+plot(fit, which = "cif_plot")
+```
+
+Each event type gets its own line style, each group its own color -- so
+you can see at a glance whether the event of interest and the competing
+event are moving in the directions you'd expect for each arm. The plot's
+caption below it carries the same Gray's-test and subdistribution-HR
+interpretation as the verdict table, so the figure stands on its own if
+you're pasting it directly into a write-up.

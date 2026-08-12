@@ -132,6 +132,25 @@ test_that("interpretation verdicts report the correct HR and distinguish numeric
   expect_true(grepl("one-unit increase", age_note))
 })
 
+test_that("ph_plot and influence_plot carry non-empty captions from their matching verdicts", {
+  set.seed(9)
+  n <- 150
+  dat <- data.frame(
+    time = stats::rexp(n, rate = 0.05),
+    event = stats::rbinom(n, 1, 0.7),
+    arm = factor(sample(c("control", "treatment"), n, replace = TRUE))
+  )
+  fit <- fit_coxph_pipeline(dat, "time", "event", covariates = "arm")
+
+  ph_caption <- fit$plots$ph_plot$labels$caption
+  expect_false(is.null(ph_caption))
+  expect_true(nzchar(ph_caption))
+
+  influence_caption <- fit$plots$influence_plot$labels$caption
+  expect_false(is.null(influence_caption))
+  expect_true(grepl("dfbetas", influence_caption))
+})
+
 test_that("print.coxph_pipeline and plot.coxph_pipeline run without error", {
   set.seed(3)
   n <- 120

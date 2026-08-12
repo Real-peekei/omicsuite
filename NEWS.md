@@ -1,3 +1,48 @@
+# omicsuite 0.7.0
+
+* New: every plot across every module now carries its matching verdict
+  note as a wrapped plot caption (via a new shared `add_caption()` helper
+  in `R/utils.R`), so a figure alone -- not just the `verdicts` table --
+  carries its own interpretation. Multiple matching verdicts (e.g. a KM
+  plot's median-survival and log-rank notes) are joined with a blank line.
+  `theme_omicsuite()` now styles captions left-aligned and italic, since
+  ggplot2's right-aligned default reads poorly for multi-line paragraph
+  text. Applied to all six modules: `fit_coxph_pipeline()` (`ph_plot`,
+  `influence_plot`, `functional_form_<var>`), `fit_km_pipeline()`
+  (`km_plot`, `parametric_overlay`), `fit_rnaseq_nb_pipeline()`
+  (`pp_check`, `shrinkage_plot`, `rhat_plot`), `simulate_gillespie_epidemic()`
+  (`trajectory_plot`, `final_size_hist`, `peak_time_hist`),
+  `integrate_multiomics()` (`block_scores`, `variance_explained`,
+  `stability`), and `fit_competing_risks_pipeline()` (`cif_plot`).
+
+# omicsuite 0.6.0
+
+* New: `fit_competing_risks_pipeline()`, the sixth module -- completes the
+  "Survival analysis" roadmap row (Cox PH, Kaplan-Meier, competing risks):
+  - nonparametric cumulative incidence functions (CIFs) per event type via
+    `cmprsk::cuminc()`, optionally grouped
+  - Gray's test for CIF differences across groups, per event type
+  - a Fine-Gray subdistribution hazard model (`cmprsk::crr()`) with
+    subdistribution hazard ratios reported the same way
+    `fit_coxph_pipeline()` reports ordinary hazard ratios, but explicitly
+    labeled so the two quantities don't get conflated
+  - a standing `subdistribution_vs_cause_specific` verdict explaining why
+    this differs from treating competing events as censoring in a
+    standard Cox model
+  - `event_var` here encodes *which* event occurred (0 = censored, 1 =
+    event of interest, 2+ = competing events), documented prominently since
+    it differs from the binary 0/1 convention used elsewhere in the package
+  - `print()`, `summary()`, and `plot()` S3 methods
+  - `cmprsk` is a `Suggests`, per the dependency policy
+* Bug fix: `fit_competing_risks_pipeline()` errored with "arguments imply
+  differing number of rows" whenever `group_var` was omitted. Root cause:
+  `cmprsk::cuminc()` checks `missing(group)` internally to decide whether
+  to fall back to its own default, but the code always passed `group = `
+  (even when its value was `NULL`), so `missing()` was always `FALSE` and
+  `as.factor(NULL)` produced a length-0 factor against the full data.
+  Fixed by building the argument list dynamically via `do.call()`, so
+  `group` is only present in the call at all when `group_var` is supplied.
+
 # omicsuite 0.5.0
 
 * New: `fit_km_pipeline()`, the fifth module -- Kaplan-Meier survival curve

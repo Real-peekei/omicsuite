@@ -52,7 +52,8 @@ was not supplied.}
 \item{plots}{A named list of \code{ggplot}-family objects: \code{km_plot}
 (a \code{ggsurvplot} object if \code{survminer} is installed, otherwise a plain
 \code{ggplot}), and \code{parametric_overlay} if \code{parametric_dist} was supplied
-and the overlay could be built (see Details).}
+and the overlay could be built (see Details). Each carries its
+matching verdict note(s) as a wrapped plot caption.}
 \item{verdicts}{A data.frame: median survival per stratum and the
 log-rank test as \code{"interpretation"} rows, censoring summary and
 parametric-fit AIC as \code{"info"} rows, and the parametric overlay as a

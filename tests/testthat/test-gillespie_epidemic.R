@@ -100,6 +100,26 @@ test_that("interpretation[final_size] reports a real summary when outbreaks occu
   }
 })
 
+test_that("trajectory_plot, final_size_hist, and peak_time_hist carry non-empty captions", {
+  fit <- simulate_gillespie_epidemic(
+    model = "SIR",
+    initial_state = c(S = 199, I = 1, R = 0),
+    params = list(beta = 0.5, gamma = 0.1),
+    t_max = 60, n_sim = 15, seed = 2
+  )
+
+  traj_caption <- fit$plots$trajectory_plot$labels$caption
+  expect_false(is.null(traj_caption))
+  expect_true(grepl("R0", traj_caption))
+
+  final_size_caption <- fit$plots$final_size_hist$labels$caption
+  expect_false(is.null(final_size_caption))
+
+  peak_time_caption <- fit$plots$peak_time_hist$labels$caption
+  expect_false(is.null(peak_time_caption))
+  expect_true(grepl("fadeout|extinct", peak_time_caption))
+})
+
 test_that("print.gillespie_epidemic and plot.gillespie_epidemic run without error", {
   fit <- simulate_gillespie_epidemic(
     model = "SIR",

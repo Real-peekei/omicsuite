@@ -57,7 +57,8 @@
 #'   \item{stability}{A data.frame: per-block, per-feature bootstrap
 #'     sign-agreement rate for the top-loading features on component 1.}
 #'   \item{plots}{A named list of `ggplot` objects: `block_scores`,
-#'     `variance_explained`, `stability`.}
+#'     `variance_explained`, `stability`. Each carries its matching verdict
+#'     note(s) as a wrapped plot caption.}
 #'   \item{verdicts}{A data.frame summarizing sample alignment, variance
 #'     explained, and loading stability, plus a per-block group-separation
 #'     interpretation when `group` is supplied, in the same style as
@@ -347,6 +348,10 @@ integrate_multiomics <- function(blocks,
       x = "Component 1", y = "Component 2", color = if (!is.null(group_df)) "Group" else NULL
     ) +
     theme_omicsuite()
+  plots$block_scores <- add_caption(
+    plots$block_scores,
+    verdicts$note[grepl("^interpretation\\[group_separation_", verdicts$check)]
+  )
 
   plots$variance_explained <- ggplot2::ggplot(
     ave_df, ggplot2::aes(x = factor(.data$component), y = .data$variance_explained, fill = .data$block)
@@ -357,6 +362,10 @@ integrate_multiomics <- function(blocks,
       x = "Component", y = "Variance explained", fill = "Block"
     ) +
     theme_omicsuite()
+  plots$variance_explained <- add_caption(
+    plots$variance_explained,
+    verdicts$note[grepl("^variance_explained\\[", verdicts$check)]
+  )
 
   plots$stability <- ggplot2::ggplot(
     stability, ggplot2::aes(x = stats::reorder(.data$feature, .data$stability), y = .data$stability)
@@ -371,6 +380,10 @@ integrate_multiomics <- function(blocks,
       x = NULL, y = "Sign-agreement rate"
     ) +
     theme_omicsuite()
+  plots$stability <- add_caption(
+    plots$stability,
+    verdicts$note[grepl("^loading_stability\\[", verdicts$check)]
+  )
 
   structure(
     list(

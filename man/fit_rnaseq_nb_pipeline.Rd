@@ -88,7 +88,8 @@ estimate for comparison.}
 \item{dispersion}{A list with the posterior summary of the negative
 binomial shape parameter.}
 \item{plots}{A named list of \code{ggplot} objects: \code{pp_check},
-\code{shrinkage_plot}, and \code{rhat_plot}.}
+\code{shrinkage_plot}, and \code{rhat_plot}. Each carries its matching verdict
+note as a wrapped plot caption.}
 \item{verdicts}{A data.frame summarizing convergence, dispersion,
 posterior predictive fit, and a plain-language interpretation of the
 population-level \code{condition_var} effect, in the same style as
