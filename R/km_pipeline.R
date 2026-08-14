@@ -48,12 +48,12 @@
 #'   \item{plots}{A named list of `ggplot`-family objects: `km_plot`
 #'     (a `ggsurvplot` object if `survminer` is installed, otherwise a plain
 #'     `ggplot`), and `parametric_overlay` if `parametric_dist` was supplied
-#'     and the overlay could be built (see Details). Each carries its
-#'     matching verdict note(s) as a wrapped plot caption.}
+#'     and the overlay could be built (see Details).}
 #'   \item{verdicts}{A data.frame: median survival per stratum and the
 #'     log-rank test as `"interpretation"` rows, censoring summary and
 #'     parametric-fit AIC as `"info"` rows, and the parametric overlay as a
-#'     `"review"` row.}
+#'     `"review"` row. A `plot` column names which entry in `plots` each row
+#'     explains (`"km_plot"` or `"parametric_overlay"`).}
 #' }
 #'
 #' @examples
@@ -144,7 +144,8 @@ fit_km_pipeline <- function(data,
       check = sprintf("interpretation[median_survival_%s]", row$stratum),
       label = "interpretation",
       statistic = row$median, p_value = NA_real_,
-      note = note
+      note = note,
+      plot = "km_plot"
     )
   }))
 
@@ -167,7 +168,8 @@ fit_km_pipeline <- function(data,
         } else {
           "No significant evidence that survival differs across groups at this alpha."
         }
-      )
+      ),
+      plot = "km_plot"
     )
   }
 
@@ -181,7 +183,8 @@ fit_km_pipeline <- function(data,
     note = sprintf(
       "%d of %d subjects (%.1f%%) were censored rather than observed to have the event.",
       n_total - n_events, n_total, 100 * (1 - n_events / n_total)
-    )
+    ),
+    plot = "km_plot"
   )
 
   # --- optional parametric overlay --------------------------------------------------
@@ -197,13 +200,15 @@ fit_km_pipeline <- function(data,
       note = sprintf(
         "%s parametric fit: AIC = %.1f, log-likelihood = %.1f. Compare AIC across candidate distributions if trying to choose one; lower is better.",
         tools::toTitleCase(parametric_dist), parametric_fit$AIC, parametric_fit$loglik
-      )
+      ),
+      plot = "parametric_overlay"
     )
     overlay_verdict <- make_note(
       check = sprintf("parametric_overlay[%s]", parametric_dist),
       label = "review",
       statistic = NA_real_, p_value = NA_real_,
-      note = "Compare the parametric curve against the KM step function in plots$parametric_overlay -- systematic divergence suggests this distributional family is a poor fit, regardless of what the AIC alone suggests."
+      note = "Compare the parametric curve against the KM step function in plots$parametric_overlay -- systematic divergence suggests this distributional family is a poor fit, regardless of what the AIC alone suggests.",
+      plot = "parametric_overlay"
     )
     parametric_verdicts <- rbind(aic_verdict, overlay_verdict)
   }
@@ -248,16 +253,6 @@ fit_km_pipeline <- function(data,
         x = "Time", y = "Survival probability", color = strata_var, fill = strata_var
       ) +
       theme_omicsuite()
-  }
-
-  km_caption_notes <- verdicts$note[
-    grepl("^interpretation\\[median_survival_", verdicts$check) |
-      verdicts$check %in% c("interpretation[log_rank_test]", "censoring_summary")
-  ]
-  if (inherits(plots$km_plot, "ggsurvplot")) {
-    plots$km_plot$plot <- add_caption(plots$km_plot$plot, km_caption_notes)
-  } else {
-    plots$km_plot <- add_caption(plots$km_plot, km_caption_notes)
   }
 
   if (!is.null(parametric_fit)) {
@@ -333,10 +328,7 @@ fit_km_pipeline <- function(data,
           x = "Time", y = "Survival probability", color = strata_var
         ) +
         theme_omicsuite()
-      add_caption(overlay_ggplot, verdicts$note[verdicts$check %in% c(
-        sprintf("parametric_fit[%s]", parametric_dist),
-        sprintf("parametric_overlay[%s]", parametric_dist)
-      )])
+      overlay_ggplot
     }, error = function(e) {
       parametric_overlay_error <<- conditionMessage(e)
       NULL

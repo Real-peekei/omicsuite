@@ -80,7 +80,7 @@ plot(fit, which = "cif_plot")
 
 Each event type gets its own line style, each group its own color -- so
 you can see at a glance whether the event of interest and the competing
-event are moving in the directions you'd expect for each arm. The plot's
-caption below it carries the same Gray's-test and subdistribution-HR
-interpretation as the verdict table, so the figure stands on its own if
-you're pasting it directly into a write-up.
+event are moving in the directions you'd expect for each arm. The
+`fit$verdicts` rows above with `plot == "cif_plot"` are the ones that
+explain this figure -- Gray's test and the subdistribution hazard ratios --
+worth pulling into the same write-up as the figure itself.

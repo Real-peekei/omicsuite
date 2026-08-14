@@ -46,12 +46,13 @@
 #'   \item{functional_form}{A named list of data.frames (martingale residual
 #'     vs. covariate value) for each continuous covariate in `covariates`.}
 #'   \item{plots}{A named list of `ggplot` objects: `ph_plot`, `influence_plot`,
-#'     and one `functional_form_<var>` entry per continuous covariate. Each
-#'     carries its matching verdict note as a wrapped plot caption.}
+#'     and one `functional_form_<var>` entry per continuous covariate.}
 #'   \item{verdicts}{A data.frame summarizing every diagnostic check
 #'     (`"pass"`/`"flagged"`), each functional-form check (`"review"`), and a
 #'     plain-language hazard-ratio interpretation for every model term
-#'     (`"interpretation"`).}
+#'     (`"interpretation"`). A `plot` column names which entry in `plots`
+#'     (if any) each row explains, e.g. `"ph_plot"` for the proportional
+#'     hazards rows.}
 #'   \item{alpha}{The significance threshold used.}
 #' }
 #'
@@ -147,7 +148,8 @@ fit_coxph_pipeline <- function(data,
         "No evidence against proportional hazards for this term."
       } else {
         "Schoenfeld residuals correlate with time -- hazard ratio for this term may not be constant; consider a time-varying coefficient or stratification."
-      }
+      },
+      plot = "ph_plot"
     )
   }))
   ph_verdicts <- rbind(
@@ -161,7 +163,8 @@ fit_coxph_pipeline <- function(data,
         "Global test finds no overall violation of the proportional hazards assumption."
       } else {
         "Global test flags a violation of proportional hazards somewhere in the model."
-      }
+      },
+      plot = "ph_plot"
     )
   )
 
@@ -193,7 +196,8 @@ fit_coxph_pipeline <- function(data,
       } else {
         "A non-trivial share of observations are individually influential -- inspect flagged rows before reporting hazard ratios."
       }
-    )
+    ),
+    plot = "influence_plot"
   )
 
   # --- functional form check (martingale residuals) ---------------------------
@@ -219,9 +223,9 @@ fit_coxph_pipeline <- function(data,
           check = sprintf("functional_form[%s]", v),
           passed = NA,
           statistic = NA_real_,
-
           p_value = NA_real_,
-          note = "Martingale residuals plotted against this covariate; a loess smooth that is flat suggests the linear (log-hazard) form is adequate. Requires visual review -- not auto-scored."
+          note = "Martingale residuals plotted against this covariate; a loess smooth that is flat suggests the linear (log-hazard) form is adequate. Requires visual review -- not auto-scored.",
+          plot = sprintf("functional_form_%s", v)
         )
       )
     }
@@ -302,10 +306,6 @@ fit_coxph_pipeline <- function(data,
       x = NULL, y = expression(-log[10](p))
     ) +
     theme_omicsuite()
-  plots$ph_plot <- add_caption(
-    plots$ph_plot,
-    verdicts$note[grepl("^proportional_hazards\\[", verdicts$check)]
-  )
 
   influence_df <- data.frame(
     index = used_rows,
@@ -324,10 +324,6 @@ fit_coxph_pipeline <- function(data,
       x = "Observation index", y = "max |dfbetas|", color = "Flagged"
     ) +
     theme_omicsuite()
-  plots$influence_plot <- add_caption(
-    plots$influence_plot,
-    verdicts$note[verdicts$check == "influence[dfbetas]"]
-  )
 
   for (v in names(functional_form)) {
     plots[[sprintf("functional_form_%s", v)]] <- ggplot2::ggplot(
@@ -343,10 +339,6 @@ fit_coxph_pipeline <- function(data,
         x = v, y = "Martingale residual"
       ) +
       theme_omicsuite()
-    plots[[sprintf("functional_form_%s", v)]] <- add_caption(
-      plots[[sprintf("functional_form_%s", v)]],
-      verdicts$note[verdicts$check == sprintf("functional_form[%s]", v)]
-    )
   }
 
   structure(

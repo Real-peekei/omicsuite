@@ -88,12 +88,12 @@ estimate for comparison.}
 \item{dispersion}{A list with the posterior summary of the negative
 binomial shape parameter.}
 \item{plots}{A named list of \code{ggplot} objects: \code{pp_check},
-\code{shrinkage_plot}, and \code{rhat_plot}. Each carries its matching verdict
-note as a wrapped plot caption.}
+\code{shrinkage_plot}, and \code{rhat_plot}.}
 \item{verdicts}{A data.frame summarizing convergence, dispersion,
 posterior predictive fit, and a plain-language interpretation of the
 population-level \code{condition_var} effect, in the same style as
-\code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}.}
+\code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}. A \code{plot} column names which entry in \code{plots}
+each row explains.}
 }
 }
 \description{

@@ -71,12 +71,12 @@ columns.}
 \item{stability}{A data.frame: per-block, per-feature bootstrap
 sign-agreement rate for the top-loading features on component 1.}
 \item{plots}{A named list of \code{ggplot} objects: \code{block_scores},
-\code{variance_explained}, \code{stability}. Each carries its matching verdict
-note(s) as a wrapped plot caption.}
+\code{variance_explained}, \code{stability}.}
 \item{verdicts}{A data.frame summarizing sample alignment, variance
 explained, and loading stability, plus a per-block group-separation
 interpretation when \code{group} is supplied, in the same style as
-\code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}.}
+\code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}. A \code{plot} column names which entry in \code{plots}
+each row explains.}
 }
 }
 \description{

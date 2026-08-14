@@ -60,12 +60,12 @@ peak infectious count.}
 \item{prop_extinct}{Proportion of realizations classified as an early
 stochastic fadeout.}
 \item{plots}{A named list of \code{ggplot} objects: \code{trajectory_plot},
-\code{final_size_hist}, \code{peak_time_hist}. Each carries its matching
-verdict note as a wrapped plot caption.}
+\code{final_size_hist}, \code{peak_time_hist}.}
 \item{verdicts}{A data.frame with plain-language interpretation rows for
 the basic reproduction number, the stochastic extinction probability,
 and the final-size distribution among sustained outbreaks, in the
-same style as \code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}.}
+same style as \code{\link[=fit_coxph_pipeline]{fit_coxph_pipeline()}}. A \code{plot} column names which
+entry in \code{plots} each row explains.}
 }
 }
 \description{

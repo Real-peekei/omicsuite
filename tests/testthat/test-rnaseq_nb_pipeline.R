@@ -84,16 +84,17 @@ test_that("fit_rnaseq_nb_pipeline errors informatively on missing columns", {
   )
 })
 
-test_that("shrinkage_plot and rhat_plot carry non-empty captions from their matching verdicts", {
+test_that("interpretation and convergence verdicts link to their matching plots, and those plots carry no caption", {
   fit <- make_toy_rnaseq_fit()
 
-  shrinkage_caption <- fit$plots$shrinkage_plot$labels$caption
-  expect_false(is.null(shrinkage_caption))
-  expect_true(grepl("expression on average across genes", shrinkage_caption))
+  interp_row <- fit$verdicts[grepl("^interpretation\\[", fit$verdicts$check), ]
+  expect_identical(interp_row$plot, "shrinkage_plot")
 
-  rhat_caption <- fit$plots$rhat_plot$labels$caption
-  expect_false(is.null(rhat_caption))
-  expect_true(grepl("Rhat", rhat_caption))
+  convergence_row <- fit$verdicts[fit$verdicts$check == "mcmc_convergence", ]
+  expect_identical(convergence_row$plot, "rhat_plot")
+
+  expect_null(fit$plots$shrinkage_plot$labels$caption)
+  expect_null(fit$plots$rhat_plot$labels$caption)
 })
 
 test_that("print.rnaseq_nb_pipeline and plot.rnaseq_nb_pipeline run without error", {

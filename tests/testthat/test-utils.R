@@ -1,35 +1,37 @@
-test_that("add_caption returns the plot unchanged when notes is empty, NA, or blank", {
-  p <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x = .data$x, y = .data$y)) +
-    ggplot2::geom_point()
+test_that("make_verdict() defaults plot to NA and accepts an explicit value", {
+  v_default <- make_verdict(check = "some_check", passed = TRUE)
+  expect_true("plot" %in% names(v_default))
+  expect_true(is.na(v_default$plot))
 
-  expect_null(add_caption(p, character(0))$labels$caption)
-  expect_null(add_caption(p, NA_character_)$labels$caption)
-  expect_null(add_caption(p, "")$labels$caption)
-  expect_null(add_caption(p, c(NA_character_, ""))$labels$caption)
+  v_linked <- make_verdict(check = "some_check", passed = TRUE, plot = "some_plot")
+  expect_identical(v_linked$plot, "some_plot")
 })
 
-test_that("add_caption attaches wrapped note text as a plot caption", {
-  p <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x = .data$x, y = .data$y)) +
-    ggplot2::geom_point()
+test_that("make_note() defaults plot to NA and accepts an explicit value", {
+  n_default <- make_note(check = "some_check", label = "info")
+  expect_true("plot" %in% names(n_default))
+  expect_true(is.na(n_default$plot))
 
-  short_note <- "HR = 0.72, p = 0.01."
-  captioned <- add_caption(p, short_note)
-  expect_identical(captioned$labels$caption, short_note)
+  n_linked <- make_note(check = "some_check", label = "interpretation", plot = "some_plot")
+  expect_identical(n_linked$plot, "some_plot")
+})
 
-  long_note <- paste(rep("word", 40), collapse = " ")
-  captioned_long <- add_caption(p, long_note, width = 20)
-  expect_true(grepl("\n", captioned_long$labels$caption))
-  # wrapping shouldn't drop or duplicate any words
-  expect_identical(
-    gsub("\n", " ", captioned_long$labels$caption),
-    long_note
+test_that("rows from make_verdict() and make_note() rbind cleanly with a mix of linked and unlinked plots", {
+  verdicts <- rbind(
+    make_verdict(check = "a", passed = TRUE, plot = "plot_a"),
+    make_note(check = "b", label = "info"),
+    make_note(check = "c", label = "interpretation", plot = "plot_c")
   )
+  expect_identical(nrow(verdicts), 3L)
+  expect_identical(verdicts$plot, c("plot_a", NA_character_, "plot_c"))
 })
 
-test_that("add_caption joins multiple notes with a blank line and drops empty entries", {
-  p <- ggplot2::ggplot(data.frame(x = 1, y = 1), ggplot2::aes(x = .data$x, y = .data$y)) +
-    ggplot2::geom_point()
-
-  captioned <- add_caption(p, c("First note.", "", NA_character_, "Second note."))
-  expect_identical(captioned$labels$caption, "First note.\n\nSecond note.")
+test_that("print_verdicts appends a plot pointer only for rows that have one", {
+  verdicts <- rbind(
+    make_verdict(check = "a", passed = TRUE, note = "note a", plot = "plot_a"),
+    make_note(check = "b", label = "info", note = "note b")
+  )
+  out <- testthat::capture_output(print_verdicts(verdicts))
+  expect_true(grepl("\\[see plots\\$plot_a\\]", out))
+  expect_false(grepl("\\[see plots\\$NA\\]", out))
 })

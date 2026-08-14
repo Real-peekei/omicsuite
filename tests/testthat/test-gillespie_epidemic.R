@@ -100,7 +100,7 @@ test_that("interpretation[final_size] reports a real summary when outbreaks occu
   }
 })
 
-test_that("trajectory_plot, final_size_hist, and peak_time_hist carry non-empty captions", {
+test_that("R0, extinction, and final_size verdicts link to their matching plots, and those plots carry no caption", {
   fit <- simulate_gillespie_epidemic(
     model = "SIR",
     initial_state = c(S = 199, I = 1, R = 0),
@@ -108,16 +108,18 @@ test_that("trajectory_plot, final_size_hist, and peak_time_hist carry non-empty 
     t_max = 60, n_sim = 15, seed = 2
   )
 
-  traj_caption <- fit$plots$trajectory_plot$labels$caption
-  expect_false(is.null(traj_caption))
-  expect_true(grepl("R0", traj_caption))
+  r0_row <- fit$verdicts[fit$verdicts$check == "interpretation[R0]", ]
+  expect_identical(r0_row$plot, "trajectory_plot")
 
-  final_size_caption <- fit$plots$final_size_hist$labels$caption
-  expect_false(is.null(final_size_caption))
+  extinction_row <- fit$verdicts[fit$verdicts$check == "interpretation[extinction_probability]", ]
+  expect_identical(extinction_row$plot, "peak_time_hist")
 
-  peak_time_caption <- fit$plots$peak_time_hist$labels$caption
-  expect_false(is.null(peak_time_caption))
-  expect_true(grepl("fadeout|extinct", peak_time_caption))
+  final_size_row <- fit$verdicts[fit$verdicts$check == "interpretation[final_size]", ]
+  expect_identical(final_size_row$plot, "final_size_hist")
+
+  expect_null(fit$plots$trajectory_plot$labels$caption)
+  expect_null(fit$plots$final_size_hist$labels$caption)
+  expect_null(fit$plots$peak_time_hist$labels$caption)
 })
 
 test_that("print.gillespie_epidemic and plot.gillespie_epidemic run without error", {

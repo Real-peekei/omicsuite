@@ -36,8 +36,8 @@ Every pipeline in this package is a single entry-point function that:
 
 ## The verdicts data.frame
 
-Every verdict row has the same five columns: `check`, `verdict`, `statistic`,
-`p_value`, `note`. `verdict` is one of:
+Every verdict row has the same six columns: `check`, `verdict`, `statistic`,
+`p_value`, `note`, `plot`. `verdict` is one of:
 
 | Label | Built with | Means |
 |---|---|---|
@@ -45,6 +45,15 @@ Every verdict row has the same five columns: `check`, `verdict`, `statistic`,
 | `"info"` | `make_note(check, "info", ...)` | A fitted-value note that isn't a check (e.g. dispersion parameter, R0) |
 | `"review"` | `make_note(check, "review", ...)` | Needs visual/manual inspection, not auto-scored (e.g. functional form, posterior predictive check) |
 | `"interpretation"` | `make_note(check, "interpretation", ...)` | A plain-language restatement of a fitted effect and its uncertainty |
+
+`plot` is an optional character column (`NA` by default) naming the entry
+in the pipeline's `plots` list that a row explains, e.g. `plot = "ph_plot"`
+for the proportional hazards rows. Set it when a verdict is genuinely about
+one specific plot; leave it `NA` otherwise. **Plots themselves never carry
+captions or embedded interpretation text** -- the `plot` column is the only
+link between a figure and its explanation, so a plot always renders clean
+and the explanation always lives in one place (`verdicts`), not duplicated
+onto the figure.
 
 **On interpretation rows specifically:** these restate what the model
 estimated (an effect size, a CI, a significance threshold) in plain

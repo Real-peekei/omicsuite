@@ -89,17 +89,18 @@ test_that("group-separation interpretation appears only when group is supplied, 
   expect_true(all(sep_rows$p_value < 0.05))
 })
 
-test_that("variance_explained and stability plots carry non-empty captions from their matching verdicts", {
+test_that("variance_explained and loading_stability verdicts link to their matching plots, and those plots carry no caption", {
   blocks <- make_toy_blocks()
   fit <- integrate_multiomics(blocks, ncomp = 2, n_boot = 5, seed = 1)
 
-  ve_caption <- fit$plots$variance_explained$labels$caption
-  expect_false(is.null(ve_caption))
-  expect_true(grepl("variance", ve_caption))
+  ve_rows <- fit$verdicts[grepl("^variance_explained\\[", fit$verdicts$check), ]
+  expect_true(all(ve_rows$plot == "variance_explained"))
 
-  stability_caption <- fit$plots$stability$labels$caption
-  expect_false(is.null(stability_caption))
-  expect_true(grepl("sign-agreement rate", stability_caption))
+  stability_rows <- fit$verdicts[grepl("^loading_stability\\[", fit$verdicts$check), ]
+  expect_true(all(stability_rows$plot == "stability"))
+
+  expect_null(fit$plots$variance_explained$labels$caption)
+  expect_null(fit$plots$stability$labels$caption)
 })
 
 test_that("print.multiomics_pipeline and plot.multiomics_pipeline run without error", {

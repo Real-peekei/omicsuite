@@ -8,13 +8,14 @@ contract: fit a model, run the diagnostic checks a careful methods section
 would include, render `ggplot2` plots, and return a structured verdict
 table -- assumption checks, informational notes, and a plain-language
 interpretation of the fitted effect -- rather than a bare point estimate.
-Every plot also carries its matching verdict note as a caption, so a
-figure alone carries its own interpretation, not just the verdicts table.
+Verdict rows that explain a specific plot say so via a `plot` column, so
+you always know which figure a given row is about -- plots themselves stay
+visually clean, with no embedded text.
 
 **Status:** v0.7.0 ships six modules (survival Cox PH, survival
 Kaplan-Meier, survival competing risks, RNA-seq, epidemic, multi-omics),
-each with plain-language interpretation verdicts and captioned plots, plus
-a documentation site. See `NEWS.md` for what's shipped and
+each with plain-language interpretation verdicts, plus a documentation
+site. See `NEWS.md` for what's shipped and
 [`ROADMAP.md`](ROADMAP.md) for what's next -- omicsuite is meant to grow
 past these; see [`CONTRIBUTING.md`](CONTRIBUTING.md) for the shared
 pipeline contract new modules follow. The

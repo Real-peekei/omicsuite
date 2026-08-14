@@ -57,12 +57,12 @@
 #'   \item{stability}{A data.frame: per-block, per-feature bootstrap
 #'     sign-agreement rate for the top-loading features on component 1.}
 #'   \item{plots}{A named list of `ggplot` objects: `block_scores`,
-#'     `variance_explained`, `stability`. Each carries its matching verdict
-#'     note(s) as a wrapped plot caption.}
+#'     `variance_explained`, `stability`.}
 #'   \item{verdicts}{A data.frame summarizing sample alignment, variance
 #'     explained, and loading stability, plus a per-block group-separation
 #'     interpretation when `group` is supplied, in the same style as
-#'     [fit_coxph_pipeline()].}
+#'     [fit_coxph_pipeline()]. A `plot` column names which entry in `plots`
+#'     each row explains.}
 #' }
 #'
 #' @examples
@@ -196,7 +196,8 @@ integrate_multiomics <- function(blocks,
         } else {
           "This block is contributing a meaningful share of its own variance to the shared components."
         }
-      )
+      ),
+      plot = "variance_explained"
     )
   }))
   ave_verdicts$verdict <- "info"
@@ -283,7 +284,8 @@ integrate_multiomics <- function(blocks,
         } else {
           "A non-trivial share of top loadings flip sign under resampling -- treat the specific feature ranking within this block cautiously, even if the block-level integration is otherwise sound."
         }
-      )
+      ),
+      plot = "stability"
     )
   }))
 
@@ -303,7 +305,8 @@ integrate_multiomics <- function(blocks,
           check = sprintf("interpretation[group_separation_%s]", bname),
           label = "interpretation",
           statistic = NA_real_, p_value = NA_real_,
-          note = "Fewer than two distinct group labels are present among this block's samples, so group separation on component 1 can't be tested."
+          note = "Fewer than two distinct group labels are present among this block's samples, so group separation on component 1 can't be tested.",
+          plot = "block_scores"
         ))
       }
       test_result <- stats::kruskal.test(comp1 ~ group, data = block_scores)
@@ -320,7 +323,8 @@ integrate_multiomics <- function(blocks,
           } else {
             sprintf("No significant difference between groups on this block's shared component at alpha = %.2f -- component 1 here isn't distinguishing the supplied groups, whatever else it's capturing.", alpha_group_separation)
           }
-        )
+        ),
+        plot = "block_scores"
       )
     }))
     verdicts <- rbind(verdicts, separation_verdicts)
@@ -348,10 +352,6 @@ integrate_multiomics <- function(blocks,
       x = "Component 1", y = "Component 2", color = if (!is.null(group_df)) "Group" else NULL
     ) +
     theme_omicsuite()
-  plots$block_scores <- add_caption(
-    plots$block_scores,
-    verdicts$note[grepl("^interpretation\\[group_separation_", verdicts$check)]
-  )
 
   plots$variance_explained <- ggplot2::ggplot(
     ave_df, ggplot2::aes(x = factor(.data$component), y = .data$variance_explained, fill = .data$block)
@@ -362,10 +362,6 @@ integrate_multiomics <- function(blocks,
       x = "Component", y = "Variance explained", fill = "Block"
     ) +
     theme_omicsuite()
-  plots$variance_explained <- add_caption(
-    plots$variance_explained,
-    verdicts$note[grepl("^variance_explained\\[", verdicts$check)]
-  )
 
   plots$stability <- ggplot2::ggplot(
     stability, ggplot2::aes(x = stats::reorder(.data$feature, .data$stability), y = .data$stability)
@@ -380,10 +376,6 @@ integrate_multiomics <- function(blocks,
       x = NULL, y = "Sign-agreement rate"
     ) +
     theme_omicsuite()
-  plots$stability <- add_caption(
-    plots$stability,
-    verdicts$note[grepl("^loading_stability\\[", verdicts$check)]
-  )
 
   structure(
     list(

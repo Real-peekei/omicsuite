@@ -45,12 +45,12 @@
 #'   \item{prop_extinct}{Proportion of realizations classified as an early
 #'     stochastic fadeout.}
 #'   \item{plots}{A named list of `ggplot` objects: `trajectory_plot`,
-#'     `final_size_hist`, `peak_time_hist`. Each carries its matching
-#'     verdict note as a wrapped plot caption.}
+#'     `final_size_hist`, `peak_time_hist`.}
 #'   \item{verdicts}{A data.frame with plain-language interpretation rows for
 #'     the basic reproduction number, the stochastic extinction probability,
 #'     and the final-size distribution among sustained outbreaks, in the
-#'     same style as [fit_coxph_pipeline()].}
+#'     same style as [fit_coxph_pipeline()]. A `plot` column names which
+#'     entry in `plots` each row explains.}
 #' }
 #'
 #' @examples
@@ -161,7 +161,8 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
       } else {
         "At or below the epidemic threshold -- the infection is expected to die out without a major outbreak, on average."
       }
-    )
+    ),
+    plot = "trajectory_plot"
   )
 
   extinction_verdict <- make_note(
@@ -176,7 +177,8 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
       } else {
         "Most realizations produced a sustained outbreak; stochastic fadeout is a minor consideration here."
       }
-    )
+    ),
+    plot = "peak_time_hist"
   )
 
   sustained_final_size <- final_size[!is_extinct]
@@ -194,7 +196,8 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
       )
     } else {
       "No realization produced a sustained outbreak (all were classified as early stochastic fadeouts), so there's no final-size distribution to summarize beyond the extinction probability above."
-    }
+    },
+    plot = "final_size_hist"
   )
 
   verdicts <- rbind(r0_verdict, extinction_verdict, final_size_verdict)
@@ -232,10 +235,6 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
       x = "Time", y = "Infectious (I)"
     ) +
     theme_omicsuite()
-  plots$trajectory_plot <- add_caption(
-    plots$trajectory_plot,
-    verdicts$note[verdicts$check == "interpretation[R0]"]
-  )
 
   plots$final_size_hist <- ggplot2::ggplot(
     data.frame(final_size = final_size),
@@ -248,10 +247,6 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
       x = "Total ever infected", y = "Count of realizations"
     ) +
     theme_omicsuite()
-  plots$final_size_hist <- add_caption(
-    plots$final_size_hist,
-    verdicts$note[verdicts$check == "interpretation[final_size]"]
-  )
 
   plots$peak_time_hist <- ggplot2::ggplot(
     data.frame(peak_time = peak_time[!is_extinct]),
@@ -264,10 +259,6 @@ simulate_gillespie_epidemic <- function(model = c("SIR", "SEIR"),
       x = "Time of peak infectious count", y = "Count of realizations"
     ) +
     theme_omicsuite()
-  plots$peak_time_hist <- add_caption(
-    plots$peak_time_hist,
-    verdicts$note[verdicts$check == "interpretation[extinction_probability]"]
-  )
 
   structure(
     list(

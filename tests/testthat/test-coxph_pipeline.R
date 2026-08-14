@@ -132,7 +132,7 @@ test_that("interpretation verdicts report the correct HR and distinguish numeric
   expect_true(grepl("one-unit increase", age_note))
 })
 
-test_that("ph_plot and influence_plot carry non-empty captions from their matching verdicts", {
+test_that("verdicts link back to their matching plot via the plot column, and plots carry no caption", {
   set.seed(9)
   n <- 150
   dat <- data.frame(
@@ -142,13 +142,15 @@ test_that("ph_plot and influence_plot carry non-empty captions from their matchi
   )
   fit <- fit_coxph_pipeline(dat, "time", "event", covariates = "arm")
 
-  ph_caption <- fit$plots$ph_plot$labels$caption
-  expect_false(is.null(ph_caption))
-  expect_true(nzchar(ph_caption))
+  ph_rows <- fit$verdicts[grepl("^proportional_hazards\\[", fit$verdicts$check), ]
+  expect_true(all(ph_rows$plot == "ph_plot"))
 
-  influence_caption <- fit$plots$influence_plot$labels$caption
-  expect_false(is.null(influence_caption))
-  expect_true(grepl("dfbetas", influence_caption))
+  influence_row <- fit$verdicts[fit$verdicts$check == "influence[dfbetas]", ]
+  expect_identical(influence_row$plot, "influence_plot")
+
+  # plots themselves should carry no caption -- interpretation lives only in verdicts
+  expect_null(fit$plots$ph_plot$labels$caption)
+  expect_null(fit$plots$influence_plot$labels$caption)
 })
 
 test_that("print.coxph_pipeline and plot.coxph_pipeline run without error", {

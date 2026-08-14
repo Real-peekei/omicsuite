@@ -78,13 +78,20 @@ test_that("fit_competing_risks_pipeline errors clearly when cmprsk is unavailabl
   )
 })
 
-test_that("cif_plot carries a non-empty caption combining Gray's test and subdistribution HR notes", {
+test_that("Gray's test, subdistribution HR, and conceptual verdicts link to cif_plot, which carries no caption", {
   dat <- make_toy_cr_data(seed = 8)
   fit <- fit_competing_risks_pipeline(dat, "time", "event", group_var = "arm", covariates = "arm")
-  caption <- fit$plots$cif_plot$labels$caption
-  expect_false(is.null(caption))
-  expect_true(grepl("Gray's test", caption) || grepl("gray", tolower(caption)))
-  expect_true(grepl("Subdistribution HR", caption))
+
+  gray_rows <- fit$verdicts[grepl("^interpretation\\[gray_test_event_", fit$verdicts$check), ]
+  expect_true(all(gray_rows$plot == "cif_plot"))
+
+  hr_rows <- fit$verdicts[grepl("^interpretation\\[subdistribution_hr_", fit$verdicts$check), ]
+  expect_true(all(hr_rows$plot == "cif_plot"))
+
+  conceptual_row <- fit$verdicts[fit$verdicts$check == "subdistribution_vs_cause_specific", ]
+  expect_identical(conceptual_row$plot, "cif_plot")
+
+  expect_null(fit$plots$cif_plot$labels$caption)
 })
 
 test_that("print.competing_risks_pipeline and plot.competing_risks_pipeline run without error", {

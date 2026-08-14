@@ -54,12 +54,12 @@ incidence estimate, event type, and group (if \code{group_var} was
 supplied) -- the tidy form of \code{cuminc_fit} used for plotting.}
 \item{event_summary}{A data.frame: counts and proportions for each
 event code observed in \code{data[[event_var]]}, including censoring.}
-\item{plots}{A named list of \code{ggplot} objects: \code{cif_plot}, carrying its
-matching verdict notes as a wrapped caption.}
+\item{plots}{A named list of \code{ggplot} objects: \code{cif_plot}.}
 \item{verdicts}{A data.frame: event-type breakdown as \code{"info"}, Gray's
 test as \code{"interpretation"} (when \code{group_var} is supplied), and
 subdistribution hazard ratios as \code{"interpretation"} per covariate
-term (when \code{covariates} is supplied).}
+term (when \code{covariates} is supplied). A \code{plot} column names which
+entry in \code{plots} each row explains.}
 }
 }
 \description{

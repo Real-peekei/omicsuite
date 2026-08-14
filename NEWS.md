@@ -1,13 +1,14 @@
-# omicsuite 0.7.0
+# omicsuite 0.7.1
 
-* New: every plot across every module now carries its matching verdict
-  note as a wrapped plot caption (via a new shared `add_caption()` helper
-  in `R/utils.R`), so a figure alone -- not just the `verdicts` table --
-  carries its own interpretation. Multiple matching verdicts (e.g. a KM
-  plot's median-survival and log-rank notes) are joined with a blank line.
-  `theme_omicsuite()` now styles captions left-aligned and italic, since
-  ggplot2's right-aligned default reads poorly for multi-line paragraph
-  text. Applied to all six modules: `fit_coxph_pipeline()` (`ph_plot`,
+* New: every verdict row now carries an optional `plot` column naming
+  which entry in the pipeline's `plots` list it explains (e.g.
+  `plot = "ph_plot"` for the proportional hazards rows), via a new `plot`
+  parameter on `make_verdict()`/`make_note()` in `R/utils.R`. Plots
+  themselves carry no caption or embedded text -- the `plot` column is the
+  only link between a figure and its explanation, so figures stay visually
+  clean and the interpretation lives in exactly one place. `print_verdicts()`
+  appends a `[see plots$<name>]` pointer to any row that has one. Applied
+  across all six modules: `fit_coxph_pipeline()` (`ph_plot`,
   `influence_plot`, `functional_form_<var>`), `fit_km_pipeline()`
   (`km_plot`, `parametric_overlay`), `fit_rnaseq_nb_pipeline()`
   (`pp_check`, `shrinkage_plot`, `rhat_plot`), `simulate_gillespie_epidemic()`

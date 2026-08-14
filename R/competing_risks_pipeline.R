@@ -54,12 +54,12 @@
 #'     supplied) -- the tidy form of `cuminc_fit` used for plotting.}
 #'   \item{event_summary}{A data.frame: counts and proportions for each
 #'     event code observed in `data[[event_var]]`, including censoring.}
-#'   \item{plots}{A named list of `ggplot` objects: `cif_plot`, carrying its
-#'     matching verdict notes as a wrapped caption.}
+#'   \item{plots}{A named list of `ggplot` objects: `cif_plot`.}
 #'   \item{verdicts}{A data.frame: event-type breakdown as `"info"`, Gray's
 #'     test as `"interpretation"` (when `group_var` is supplied), and
 #'     subdistribution hazard ratios as `"interpretation"` per covariate
-#'     term (when `covariates` is supplied).}
+#'     term (when `covariates` is supplied). A `plot` column names which
+#'     entry in `plots` each row explains.}
 #' }
 #'
 #' @examples
@@ -185,7 +185,8 @@ fit_competing_risks_pipeline <- function(data,
           } else {
             "No significant evidence that cumulative incidence differs across groups for this event type at this alpha."
           }
-        )
+        ),
+        plot = "cif_plot"
       )
     }))
   }
@@ -219,7 +220,8 @@ fit_competing_risks_pipeline <- function(data,
         note = sprintf(
           "Subdistribution HR for `%s` = %.3f, p = %.4f. Associated with a %.1f%% %s subdistribution hazard of the event of interest (%s). This is not the same quantity as a cause-specific hazard ratio from a standard Cox model -- see this function's documentation for why.",
           term, shr, p_val, abs(pct_change), direction, sig
-        )
+        ),
+        plot = "cif_plot"
       )
     }))
   }
@@ -228,7 +230,8 @@ fit_competing_risks_pipeline <- function(data,
     check = "subdistribution_vs_cause_specific",
     label = "info",
     statistic = NA_real_, p_value = NA_real_,
-    note = "This pipeline models the subdistribution hazard (Fine-Gray), which is the right quantity for predicting cumulative incidence in the presence of competing risks. It answers a different question than a cause-specific hazard model (an ordinary Cox model with competing events treated as censored) -- the two can even point in different directions for the same covariate. Report which one you used and why."
+    note = "This pipeline models the subdistribution hazard (Fine-Gray), which is the right quantity for predicting cumulative incidence in the presence of competing risks. It answers a different question than a cause-specific hazard model (an ordinary Cox model with competing events treated as censored) -- the two can even point in different directions for the same covariate. Report which one you used and why.",
+    plot = "cif_plot"
   )
 
   verdicts <- rbind(event_verdict, conceptual_note, gray_verdict, crr_verdicts)
@@ -249,14 +252,6 @@ fit_competing_risks_pipeline <- function(data,
         color = if (is.null(group_var)) NULL else group_var, linetype = "Event code"
       ) +
       theme_omicsuite()
-  )
-  plots$cif_plot <- add_caption(
-    plots$cif_plot,
-    verdicts$note[
-      grepl("^interpretation\\[gray_test_event_", verdicts$check) |
-        grepl("^interpretation\\[subdistribution_hr_", verdicts$check) |
-        verdicts$check == "subdistribution_vs_cause_specific"
-    ]
   )
 
   structure(

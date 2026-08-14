@@ -66,12 +66,12 @@
 #'   \item{dispersion}{A list with the posterior summary of the negative
 #'     binomial shape parameter.}
 #'   \item{plots}{A named list of `ggplot` objects: `pp_check`,
-#'     `shrinkage_plot`, and `rhat_plot`. Each carries its matching verdict
-#'     note as a wrapped plot caption.}
+#'     `shrinkage_plot`, and `rhat_plot`.}
 #'   \item{verdicts}{A data.frame summarizing convergence, dispersion,
 #'     posterior predictive fit, and a plain-language interpretation of the
 #'     population-level `condition_var` effect, in the same style as
-#'     [fit_coxph_pipeline()].}
+#'     [fit_coxph_pipeline()]. A `plot` column names which entry in `plots`
+#'     each row explains.}
 #' }
 #'
 #' @examples
@@ -189,7 +189,8 @@ fit_rnaseq_nb_pipeline <- function(data,
       } else {
         "Convergence is questionable -- consider more iterations, more chains, or reparameterizing before trusting the posterior."
       }
-    )
+    ),
+    plot = "rhat_plot"
   )
 
   # --- dispersion (negative binomial shape parameter) --------------------------
@@ -219,6 +220,7 @@ fit_rnaseq_nb_pipeline <- function(data,
     note = "Compare the plots$pp_check overlay of observed vs. replicated counts. Requires visual review -- not auto-scored."
   )
   ppcheck_verdict$verdict <- "review"
+  ppcheck_verdict$plot <- "pp_check"
 
   # --- shrinkage (gene-level partial pooling of condition_var) ------------------
   fixef_est <- brms::fixef(model)
@@ -282,7 +284,8 @@ fit_rnaseq_nb_pipeline <- function(data,
         "The 95% credible interval includes no change (fold change of 1x), so this population-level effect alone isn't well-supported -- individual gene-level estimates in `shrinkage` may still be informative."
       },
       paste(as.character(top_genes), collapse = ", ")
-    )
+    ),
+    plot = "shrinkage_plot"
   )
 
   verdicts <- rbind(convergence_verdict, dispersion_verdict, ppcheck_verdict, interpretation_verdict)
@@ -297,12 +300,6 @@ fit_rnaseq_nb_pipeline <- function(data,
       theme_omicsuite(),
     error = function(e) NULL
   )
-  if (!is.null(plots$pp_check)) {
-    plots$pp_check <- add_caption(
-      plots$pp_check,
-      verdicts$note[verdicts$check == "posterior_predictive_check"]
-    )
-  }
 
   plots$shrinkage_plot <- ggplot2::ggplot(
     shrinkage,
@@ -323,10 +320,6 @@ fit_rnaseq_nb_pipeline <- function(data,
       x = "Effect estimate (log scale)", y = NULL
     ) +
     theme_omicsuite()
-  plots$shrinkage_plot <- add_caption(
-    plots$shrinkage_plot,
-    verdicts$note[verdicts$check == sprintf("interpretation[%s]", primary_coef)]
-  )
 
   rhat_df <- data.frame(parameter = names(rhat_vec), rhat = as.numeric(rhat_vec))
   plots$rhat_plot <- ggplot2::ggplot(rhat_df, ggplot2::aes(x = .data$rhat)) +
@@ -338,10 +331,6 @@ fit_rnaseq_nb_pipeline <- function(data,
       x = "Rhat", y = "Count of parameters"
     ) +
     theme_omicsuite()
-  plots$rhat_plot <- add_caption(
-    plots$rhat_plot,
-    verdicts$note[verdicts$check == "mcmc_convergence"]
-  )
 
   structure(
     list(

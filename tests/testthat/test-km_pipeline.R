@@ -144,7 +144,7 @@ test_that("the parametric overlay plot also renders with strata_var supplied", {
   grDevices::dev.off()
 })
 
-test_that("km_plot carries a non-empty caption from the median survival and log-rank verdicts", {
+test_that("median survival and log-rank verdicts link to km_plot via the plot column, and km_plot carries no caption", {
   set.seed(10)
   n <- 150
   dat <- data.frame(
@@ -153,11 +153,14 @@ test_that("km_plot carries a non-empty caption from the median survival and log-
     arm = factor(sample(c("control", "treatment"), n, replace = TRUE))
   )
   fit <- fit_km_pipeline(dat, "time", "event", strata_var = "arm")
+
+  median_rows <- fit$verdicts[grepl("^interpretation\\[median_survival_", fit$verdicts$check), ]
+  expect_true(all(median_rows$plot == "km_plot"))
+  logrank_row <- fit$verdicts[fit$verdicts$check == "interpretation[log_rank_test]", ]
+  expect_identical(logrank_row$plot, "km_plot")
+
   plot_obj <- if (inherits(fit$plots$km_plot, "ggsurvplot")) fit$plots$km_plot$plot else fit$plots$km_plot
-  caption <- plot_obj$labels$caption
-  expect_false(is.null(caption))
-  expect_true(grepl("Median survival", caption))
-  expect_true(grepl("Log-rank", caption))
+  expect_null(plot_obj$labels$caption)
 })
 
 test_that("print.km_pipeline and plot.km_pipeline run without error", {

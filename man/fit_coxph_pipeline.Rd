@@ -65,12 +65,13 @@ fitted on), and \code{n_used}.}
 \item{functional_form}{A named list of data.frames (martingale residual
 vs. covariate value) for each continuous covariate in \code{covariates}.}
 \item{plots}{A named list of \code{ggplot} objects: \code{ph_plot}, \code{influence_plot},
-and one \verb{functional_form_<var>} entry per continuous covariate. Each
-carries its matching verdict note as a wrapped plot caption.}
+and one \verb{functional_form_<var>} entry per continuous covariate.}
 \item{verdicts}{A data.frame summarizing every diagnostic check
 (\code{"pass"}/\code{"flagged"}), each functional-form check (\code{"review"}), and a
 plain-language hazard-ratio interpretation for every model term
-(\code{"interpretation"}).}
+(\code{"interpretation"}). A \code{plot} column names which entry in \code{plots}
+(if any) each row explains, e.g. \code{"ph_plot"} for the proportional
+hazards rows.}
 \item{alpha}{The significance threshold used.}
 }
 }

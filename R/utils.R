@@ -8,39 +8,8 @@ theme_omicsuite <- function() {
     ggplot2::theme(
       panel.grid.minor = ggplot2::element_blank(),
       plot.title = ggplot2::element_text(face = "bold"),
-      plot.caption = ggplot2::element_text(
-        hjust = 0, face = "italic", size = ggplot2::rel(0.75), lineheight = 1.15
-      ),
-      plot.caption.position = "plot",
       legend.position = "bottom"
     )
-}
-
-#' Attach interpretive text to a plot as a wrapped caption
-#'
-#' Pulls together one or more verdict `note` strings (from a `verdicts`
-#' data.frame's `note` column, typically) and attaches them to a ggplot
-#' object as a left-aligned, word-wrapped caption -- so the plot carries
-#' its own interpretation, not just the `verdicts` table. Multiple notes
-#' are separated by a blank line.
-#'
-#' @param plot A ggplot object.
-#' @param notes Character vector of note text. Empty or `NA` entries are
-#'   dropped; if nothing is left, `plot` is returned unchanged.
-#' @param width Integer. Wrap width in characters. Default `100`.
-#' @return `plot`, with a caption added via `+` if `notes` had content.
-#' @keywords internal
-#' @noRd
-add_caption <- function(plot, notes, width = 100) {
-  notes <- notes[!is.na(notes) & nzchar(notes)]
-  if (length(notes) == 0) {
-    return(plot)
-  }
-  caption_text <- paste(
-    vapply(notes, function(n) paste(strwrap(n, width = width), collapse = "\n"), character(1)),
-    collapse = "\n\n"
-  )
-  plot + ggplot2::labs(caption = caption_text)
 }
 
 #' Build a single verdict record
@@ -50,16 +19,23 @@ add_caption <- function(plot, notes, width = 100) {
 #' @param statistic Optional numeric test statistic.
 #' @param p_value Optional numeric p-value.
 #' @param note Character. Free-text interpretation.
+#' @param plot Optional character naming the entry in a pipeline's `plots`
+#'   list that this verdict explains (e.g. `"ph_plot"`), so a reader can
+#'   look up which figure a given row interprets without the plot itself
+#'   carrying any text. `NA` (the default) if this verdict isn't tied to a
+#'   specific plot.
 #' @return A one-row data.frame.
 #' @keywords internal
 #' @noRd
-make_verdict <- function(check, passed, statistic = NA_real_, p_value = NA_real_, note = "") {
+make_verdict <- function(check, passed, statistic = NA_real_, p_value = NA_real_, note = "",
+                          plot = NA_character_) {
   data.frame(
     check = check,
     verdict = ifelse(passed, "pass", "flagged"),
     statistic = statistic,
     p_value = p_value,
     note = note,
+    plot = plot,
     stringsAsFactors = FALSE
   )
 }
@@ -100,9 +76,11 @@ print_verdicts <- function(verdicts) {
       "NOTE"
     )
   }
+  has_plot_col <- "plot" %in% names(verdicts)
   for (i in seq_len(nrow(verdicts))) {
     v <- verdicts[i, ]
-    cat(sprintf("[%s] %-28s %s\n", tag_for(v$verdict), v$check, v$note))
+    plot_suffix <- if (has_plot_col && !is.na(v$plot)) sprintf(" [see plots$%s]", v$plot) else ""
+    cat(sprintf("[%s] %-28s %s%s\n", tag_for(v$verdict), v$check, v$note, plot_suffix))
   }
   invisible(verdicts)
 }
@@ -120,16 +98,21 @@ print_verdicts <- function(verdicts) {
 #' @param statistic Optional numeric statistic.
 #' @param p_value Optional numeric p-value.
 #' @param note Character. Free-text note.
+#' @param plot Optional character naming the entry in a pipeline's `plots`
+#'   list that this verdict explains. `NA` (the default) if this verdict
+#'   isn't tied to a specific plot.
 #' @return A one-row data.frame.
 #' @keywords internal
 #' @noRd
-make_note <- function(check, label, statistic = NA_real_, p_value = NA_real_, note = "") {
+make_note <- function(check, label, statistic = NA_real_, p_value = NA_real_, note = "",
+                       plot = NA_character_) {
   data.frame(
     check = check,
     verdict = label,
     statistic = statistic,
     p_value = p_value,
     note = note,
+    plot = plot,
     stringsAsFactors = FALSE
   )
 }
